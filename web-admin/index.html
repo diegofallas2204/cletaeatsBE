@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CletaEats | Admin Panel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen active">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-bicycle logo-icon"></i>
+                <h1>Cleta<span>Eats</span></h1>
+                <p>Panel de Administración</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" placeholder="Usuario" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="Contraseña" required>
+                </div>
+                <button type="submit" class="btn-login">Ingresar <i class="fas fa-arrow-right"></i></button>
+            </form>
+            <div id="login-error" class="error-msg"></div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="main-dashboard" class="screen">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-bicycle"></i>
+                <span>Admin</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-link active" data-section="dashboard">
+                    <i class="fas fa-chart-line"></i> Resumen
+                </a>
+                <a href="#" class="nav-link" data-section="restaurantes">
+                    <i class="fas fa-utensils"></i> Restaurantes
+                </a>
+                <a href="#" class="nav-link" data-section="pedidos">
+                    <i class="fas fa-shopping-bag"></i> Reportes
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Salir</button>
+            </div>
+        </aside>
+
+        <main class="content">
+            <header class="content-header">
+                <h2 id="section-title">Panel de Control</h2>
+                <div class="user-info">
+                    <span id="admin-name">Cargando...</span>
+                    <div class="avatar">AD</div>
+                </div>
+            </header>
+
+            <!-- Sections -->
+            <section id="section-dashboard" class="dashboard-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-info">
+                            <h3>Ventas Totales</h3>
+                            <p id="total-sales">₡0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <h3>Pedidos Completos</h3>
+                            <p id="total-orders">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h4>Ventas por Restaurante</h4>
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-restaurantes" class="dashboard-section">
+                <div class="section-header">
+                    <h3>Gestión de Restaurantes</h3>
+                    <button class="btn-add" onclick="showAddRestaurant()"><i class="fas fa-plus"></i> Nuevo</button>
+                </div>
+                <div class="table-container">
+                    <table id="restaurants-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Cédula</th>
+                                <th>Tipo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restaurants-list">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-restaurante" class="modal">
+        <div class="modal-content">
+            <h4 id="modal-title">Restaurante</h4>
+            <form id="restaurant-form">
+                <input type="hidden" id="res-id">
+                <div class="input-group">
+                    <input type="text" id="res-nombre" placeholder="Nombre" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="res-cedula" placeholder="Cédula Jurídica" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="res-direccion" placeholder="Dirección" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="res-tipo" placeholder="Tipo Comida" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
