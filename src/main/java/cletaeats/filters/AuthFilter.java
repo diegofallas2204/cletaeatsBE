@@ -27,7 +27,9 @@ public class AuthFilter implements Filter {
         String path = req.getRequestURI();
         
         // Excluir endpoints públicos
-        if (path.contains("/api/usuarios/login") || path.contains("/api/usuarios/registrar")) {
+        if (path.contains("/api/usuarios/login") || 
+            path.contains("/api/usuarios/registrar") || 
+            path.contains("/api/restaurantes")) {
             chain.doFilter(request, response);
             return;
         }

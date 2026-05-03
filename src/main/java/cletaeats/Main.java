@@ -34,6 +34,9 @@ public class Main {
         Tomcat.addServlet(ctx, "AdminServlet", new cletaeats.servlets.AdminServlet());
         ctx.addServletMappingDecoded("/api/admin/*", "AdminServlet");
 
+        Tomcat.addServlet(ctx, "RestauranteServlet", new cletaeats.servlets.RestauranteServlet());
+        ctx.addServletMappingDecoded("/api/restaurantes/*", "RestauranteServlet");
+
         // 2. Registrar Filtro CORS (Global)
         FilterDef corsFilterDef = new FilterDef();
         corsFilterDef.setFilterName("CorsFilter");

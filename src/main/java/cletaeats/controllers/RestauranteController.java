@@ -2,20 +2,20 @@ package cletaeats.controllers;
 
 import cletaeats.config.RespuestaJSON;
 import cletaeats.models.Restaurante;
-import cletaeats.repositories.RestauranteRepository;
-import java.util.List;
+import cletaeats.services.RestauranteService;
 import com.google.gson.Gson;
+import java.util.List;
 
 public class RestauranteController {
-    private final RestauranteRepository repo = new RestauranteRepository();
+    private final RestauranteService service = new RestauranteService();
     private final Gson gson = new Gson();
 
     public String listarTodos() {
         try {
-            List<Restaurante> lista = repo.listarTodos();
+            List<Restaurante> lista = service.obtenerTodos();
             return gson.toJson(RespuestaJSON.exito(lista));
         } catch (Exception e) {
-            return gson.toJson(RespuestaJSON.fallar(e.getMessage()));
+            return gson.toJson(RespuestaJSON.fallar("Error en la lógica de negocio: " + e.getMessage()));
         }
     }
 }
