@@ -48,6 +48,45 @@ public class RepartidorRepository {
         }
     }
 
+    public List<Repartidor> listarTodos() throws SQLException {
+        List<Repartidor> lista = new ArrayList<>();
+        String sql = "SELECT * FROM repartidores";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapearResultSetARepartidor(rs));
+            }
+        }
+        return lista;
+    }
+
+    public boolean actualizar(Repartidor r) throws SQLException {
+        String sql = "UPDATE repartidores SET nombre=?, email=?, direccion=?, telefono=?, tarjeta=?, estado=?, km_recorridos=?, amonestaciones=? WHERE id=?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, r.getNombre());
+            stmt.setString(2, r.getEmail());
+            stmt.setString(3, r.getDireccion());
+            stmt.setString(4, r.getTelefono());
+            stmt.setString(5, r.getTarjeta());
+            stmt.setString(6, r.getEstado());
+            stmt.setFloat(7, r.getKmRecorridos());
+            stmt.setInt(8, r.getAmonestaciones());
+            stmt.setInt(9, r.getId());
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public boolean eliminar(int id) throws SQLException {
+        String sql = "DELETE FROM repartidores WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public Repartidor buscarPorUsuarioId(int usuarioId) throws SQLException {
         String sql = "SELECT * FROM repartidores WHERE usuario_id = ?";
         try (Connection conn = conexion.getConnection();

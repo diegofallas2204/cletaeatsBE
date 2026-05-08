@@ -37,6 +37,12 @@ public class Main {
         Tomcat.addServlet(ctx, "RestauranteServlet", new cletaeats.servlets.RestauranteServlet());
         ctx.addServletMappingDecoded("/api/restaurantes/*", "RestauranteServlet");
 
+        // Servir archivos estáticos del admin
+        String webAdminPath = new File("web-admin").getAbsolutePath();
+        Context adminCtx = tomcat.addContext("/admin", webAdminPath);
+        Tomcat.addServlet(adminCtx, "default", "org.apache.catalina.servlets.DefaultServlet");
+        adminCtx.addServletMappingDecoded("/", "default");
+
         // 2. Registrar Filtro CORS (Global)
         FilterDef corsFilterDef = new FilterDef();
         corsFilterDef.setFilterName("CorsFilter");

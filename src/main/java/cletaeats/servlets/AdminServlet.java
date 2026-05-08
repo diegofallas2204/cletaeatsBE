@@ -3,9 +3,13 @@ package cletaeats.servlets;
 import cletaeats.config.RespuestaJSON;
 import cletaeats.models.Combo;
 import cletaeats.models.Restaurante;
+import cletaeats.models.Cliente;
+import cletaeats.models.Repartidor;
 import cletaeats.repositories.ComboRepository;
 import cletaeats.repositories.PedidoRepository;
 import cletaeats.repositories.RestauranteRepository;
+import cletaeats.repositories.ClienteRepository;
+import cletaeats.repositories.RepartidorRepository;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -23,6 +27,8 @@ public class AdminServlet extends HttpServlet {
     private final RestauranteRepository restauranteRepo = new RestauranteRepository();
     private final ComboRepository comboRepo = new ComboRepository();
     private final PedidoRepository pedidoRepo = new PedidoRepository();
+    private final ClienteRepository clienteRepo = new ClienteRepository();
+    private final RepartidorRepository repartidorRepo = new RepartidorRepository();
     private final Gson gson = new Gson();
 
     @Override
@@ -36,9 +42,18 @@ public class AdminServlet extends HttpServlet {
                 Map<String, Object> dashboard = new HashMap<>();
                 dashboard.put("ventasTotales", pedidoRepo.sumarVentasTotales());
                 dashboard.put("ventasPorRestaurante", pedidoRepo.obtenerVentasAgrupadasPorRestaurante());
+                dashboard.put("totalClientes", clienteRepo.listarTodos().size());
+                dashboard.put("totalRepartidores", repartidorRepo.listarTodos().size());
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(dashboard)));
             } else if (pathInfo.equals("/restaurantes")) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(restauranteRepo.listarTodos())));
+            } else if (pathInfo.equals("/clientes")) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(clienteRepo.listarTodos())));
+            } else if (pathInfo.equals("/repartidores")) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(repartidorRepo.listarTodos())));
+            } else if (pathInfo.equals("/combos")) {
+                // List all combos if no restId provided
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarTodos())));
             } else if (pathInfo.startsWith("/combos/")) {
                 int restId = Integer.parseInt(pathInfo.substring(8));
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarPorRestaurante(restId))));
@@ -64,6 +79,14 @@ public class AdminServlet extends HttpServlet {
                 Combo c = gson.fromJson(json, Combo.class);
                 comboRepo.crear(c);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Combo creado")));
+            } else if (pathInfo.equals("/clientes")) {
+                Cliente c = gson.fromJson(json, Cliente.class);
+                clienteRepo.crear(c);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Cliente creado")));
+            } else if (pathInfo.equals("/repartidores")) {
+                Repartidor r = gson.fromJson(json, Repartidor.class);
+                repartidorRepo.crear(r);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor creado")));
             }
         } catch (Exception e) {
             resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));
@@ -85,6 +108,14 @@ public class AdminServlet extends HttpServlet {
                 Combo c = gson.fromJson(json, Combo.class);
                 comboRepo.actualizar(c);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Combo actualizado")));
+            } else if (pathInfo.equals("/clientes")) {
+                Cliente c = gson.fromJson(json, Cliente.class);
+                clienteRepo.actualizar(c);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Cliente actualizado")));
+            } else if (pathInfo.equals("/repartidores")) {
+                Repartidor r = gson.fromJson(json, Repartidor.class);
+                repartidorRepo.actualizar(r);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor actualizado")));
             }
         } catch (Exception e) {
             resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));
@@ -105,6 +136,14 @@ public class AdminServlet extends HttpServlet {
                 int id = Integer.parseInt(pathInfo.substring(8));
                 comboRepo.eliminar(id);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Combo eliminado")));
+            } else if (pathInfo.startsWith("/clientes/")) {
+                int id = Integer.parseInt(pathInfo.substring(10));
+                clienteRepo.eliminar(id);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Cliente eliminado")));
+            } else if (pathInfo.startsWith("/repartidores/")) {
+                int id = Integer.parseInt(pathInfo.substring(14));
+                repartidorRepo.eliminar(id);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor eliminado")));
             }
         } catch (Exception e) {
             resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));

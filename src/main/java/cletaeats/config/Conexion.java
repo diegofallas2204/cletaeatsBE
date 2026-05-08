@@ -4,10 +4,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- * Gestiona la conexión física con la base de datos mediante JDBC.
- * Implementa el patrón Singleton para evi tar múltiples aperturas innecesarias.
- */
 public class Conexion {
     private static Conexion instancia;
     private Connection connection;

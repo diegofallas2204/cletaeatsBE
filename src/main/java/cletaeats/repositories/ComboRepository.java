@@ -21,6 +21,19 @@ public class ComboRepository {
         }
     }
 
+    public List<Combo> listarTodos() throws SQLException {
+        List<Combo> lista = new ArrayList<>();
+        String sql = "SELECT * FROM combos";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapearResultSetACombo(rs));
+            }
+        }
+        return lista;
+    }
+
     public List<Combo> listarPorRestaurante(int restauranteId) throws SQLException {
         List<Combo> lista = new ArrayList<>();
         String sql = "SELECT * FROM combos WHERE restaurante_id = ?";

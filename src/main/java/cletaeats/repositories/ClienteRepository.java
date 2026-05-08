@@ -49,8 +49,45 @@ public class ClienteRepository {
         return false;
     }
 
+    public List<Cliente> listarTodos() throws SQLException {
+        List<Cliente> lista = new ArrayList<>();
+        String sql = "SELECT * FROM clientes";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapearResultSetACliente(rs));
+            }
+        }
+        return lista;
+    }
+
+    public boolean actualizar(Cliente cliente) throws SQLException {
+        String sql = "UPDATE clientes SET nombre=?, direccion=?, telefono=?, email=?, tarjeta=?, estado=? WHERE id=?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, cliente.getNombre());
+            stmt.setString(2, cliente.getDireccion());
+            stmt.setString(3, cliente.getTelefono());
+            stmt.setString(4, cliente.getEmail());
+            stmt.setString(5, cliente.getTarjeta());
+            stmt.setString(6, cliente.getEstado());
+            stmt.setInt(7, cliente.getId());
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public boolean eliminar(int id) throws SQLException {
+        String sql = "DELETE FROM clientes WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public List<Cliente> listarPorEstado(String estado) throws SQLException {
-        List<Cliente> lista = new ArrayList<>(); // Inicializar siempre
+        List<Cliente> lista = new ArrayList<>();
         String sql = "SELECT * FROM clientes WHERE estado = ?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -61,7 +98,7 @@ public class ClienteRepository {
                 }
             }
         }
-        return lista; // Si no hay, devuelve [] (JSON válido), no null.
+        return lista;
     }
 
     private Cliente ejecutarConsultaUnica(String sql, int parametro) throws SQLException {
