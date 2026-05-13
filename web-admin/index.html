@@ -415,12 +415,17 @@
       
       <!-- FOOD PANEL (FILTER) -->
       <div id="food-panel">
-        <div class="food-thumb" onclick="filterByFood('')" title="Todos">🏠<span class="tip">Todos</span></div>
-        <div class="food-thumb" onclick="filterByFood('china')" title="China">🍜<span class="tip">China</span></div>
-        <div class="food-thumb" onclick="filterByFood('rápida')" title="Rápida">🍔<span class="tip">Rápida</span></div>
-        <div class="food-thumb" onclick="filterByFood('coreana')" title="Coreana">🍲<span class="tip">Coreana</span></div>
-        <div class="food-thumb" onclick="filterByFood('italiana')" title="Italiana">🍕<span class="tip">Italiana</span></div>
-        <div class="food-thumb" onclick="filterByFood('saludable')" title="Saludable">🥗<span class="tip">Saludable</span></div>
+        <div class="food-thumb" onclick="filterByFood('')" title="Todos">🏠<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('pizza')" title="Pizza">🍕<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('rápida')" title="Rápida">🍔<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('pasta')" title="Pasta">🍝<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('ensalada')" title="Ensalada">🥗<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('sushi')" title="Sushi">🍣<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('café')" title="Café">☕<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('postres')" title="Postres">🍰<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('tacos')" title="Tacos">🌮<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('pollo')" title="Pollo">🍗<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('china')" title="China">🥡<span class="tip"></span></div>
       </div>
 
       <div class="table-wrap">
@@ -649,7 +654,20 @@ const forms = {
   restaurante: (d={})=>`
     <div class="form-group"><label>Nombre</label><input id="f_nombre" value="${d.nombre||''}"/></div>
     <div class="form-group"><label>Cédula Jurídica</label><input id="f_cedula_juridica" value="${d.cedulaJuridica||''}"/></div>
-    <div class="form-group"><label>Tipo Comida</label><input id="f_tipo_comida" value="${d.tipoComida||''}"/></div>
+    <div class="form-group"><label>Tipo Comida</label>
+      <select id="f_tipo_comida">
+        <option value="Pizza" ${d.tipoComida==='Pizza'?'selected':''}>Pizza</option>
+        <option value="Comida Rápida" ${d.tipoComida==='Comida Rápida'?'selected':''}>Comida Rápida</option>
+        <option value="Pasta" ${d.tipoComida==='Pasta'?'selected':''}>Pasta</option>
+        <option value="Ensalada" ${d.tipoComida==='Ensalada'?'selected':''}>Ensalada</option>
+        <option value="Sushi" ${d.tipoComida==='Sushi'?'selected':''}>Sushi</option>
+        <option value="Café" ${d.tipoComida==='Café'?'selected':''}>Café</option>
+        <option value="Postres" ${d.tipoComida==='Postres'?'selected':''}>Postres</option>
+        <option value="Tacos" ${d.tipoComida==='Tacos'?'selected':''}>Tacos</option>
+        <option value="Pollo" ${d.tipoComida==='Pollo'?'selected':''}>Pollo</option>
+        <option value="China" ${d.tipoComida==='China'?'selected':''}>China</option>
+      </select>
+    </div>
     <div class="form-group"><label>Dirección</label><input id="f_direccion" value="${d.direccion||''}"/></div>`,
   repartidor: (d={})=>`
     <div class="form-group"><label>Nombre</label><input id="f_nombre" value="${d.nombre||''}"/></div>
