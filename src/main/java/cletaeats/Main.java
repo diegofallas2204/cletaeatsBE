@@ -13,16 +13,24 @@ import java.io.File;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        System.out.println("Iniciando Tomcat Embebido...");
+
+        // Puerto: Railway/Render lo asignan via variable de entorno PORT
+        int port = 8080;
+        String portEnv = System.getenv("PORT");
+        if (portEnv != null && !portEnv.isBlank()) {
+            port = Integer.parseInt(portEnv);
+        }
+
+        System.out.println("Iniciando CletaEats Backend en puerto " + port + "...");
 
         Tomcat tomcat = new Tomcat();
-        tomcat.setPort(8080);
+        tomcat.setPort(port);
         tomcat.getConnector(); // Inicializa el conector por defecto
 
-        // Crear un contexto base
+        // Crear un contexto base para los servlets de la API
         Context ctx = tomcat.addContext("", new File(".").getAbsolutePath());
 
-        // 1. Registrar el Servlets
+        // 1. Registrar Servlets
         Tomcat.addServlet(ctx, "UsuarioServlet", new UsuarioServlet());
         ctx.addServletMappingDecoded("/api/usuarios/*", "UsuarioServlet");
 
@@ -38,8 +46,10 @@ public class Main {
         Tomcat.addServlet(ctx, "RestauranteServlet", new cletaeats.servlets.RestauranteServlet());
         ctx.addServletMappingDecoded("/api/restaurantes/*", "RestauranteServlet");
 
-        // Servir archivos estáticos del admin
-        String webAdminPath = new File("web-admin").getAbsolutePath();
+        // Servir archivos estáticos del panel admin
+        // Busca web-admin relativo al directorio actual (funciona en dev y en servidor)
+        String webAdminPath = resolveWebAdminPath();
+        System.out.println("Sirviendo web-admin desde: " + webAdminPath);
         Context adminCtx = tomcat.addContext("/admin", webAdminPath);
         Tomcat.addServlet(adminCtx, "default", "org.apache.catalina.servlets.DefaultServlet");
         adminCtx.addServletMappingDecoded("/", "default");
@@ -79,7 +89,35 @@ public class Main {
 
         // 4. Arrancar el servidor
         tomcat.start();
-        System.out.println("Servidor corriendo en http://localhost:8080");
+        System.out.println("✅ Servidor CletaEats corriendo en http://0.0.0.0:" + port);
+        System.out.println("   API:   http://0.0.0.0:" + port + "/api/");
+        System.out.println("   Admin: http://0.0.0.0:" + port + "/admin/");
         tomcat.getServer().await(); // Mantiene el programa en ejecución
+    }
+
+    /**
+     * Resuelve la ruta del directorio web-admin.
+     * Busca en el directorio actual primero, luego en el directorio del JAR.
+     */
+    private static String resolveWebAdminPath() {
+        // 1. Buscar relativo al directorio de trabajo actual
+        File local = new File("web-admin");
+        if (local.exists() && local.isDirectory()) {
+            return local.getAbsolutePath();
+        }
+
+        // 2. Buscar relativo a donde está el JAR ejecutable
+        try {
+            File jarDir = new File(Main.class.getProtectionDomain()
+                    .getCodeSource().getLocation().toURI()).getParentFile();
+            File nextToJar = new File(jarDir, "web-admin");
+            if (nextToJar.exists() && nextToJar.isDirectory()) {
+                return nextToJar.getAbsolutePath();
+            }
+        } catch (Exception ignored) {}
+
+        // 3. Fallback: crear ruta aunque no exista (Tomcat mostrará 404)
+        System.err.println("⚠️  Directorio web-admin no encontrado. El panel admin no estará disponible.");
+        return new File("web-admin").getAbsolutePath();
     }
 }
