@@ -2,6 +2,7 @@ package cletaeats;
 
 import cletaeats.filters.AuthFilter;
 import cletaeats.filters.CorsFilter;
+import cletaeats.filters.LoggingFilter;
 import cletaeats.servlets.UsuarioServlet;
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
@@ -42,6 +43,17 @@ public class Main {
         Context adminCtx = tomcat.addContext("/admin", webAdminPath);
         Tomcat.addServlet(adminCtx, "default", "org.apache.catalina.servlets.DefaultServlet");
         adminCtx.addServletMappingDecoded("/", "default");
+
+        // 0. Registrar Filtro de Logs (Primero de todos)
+        FilterDef logFilterDef = new FilterDef();
+        logFilterDef.setFilterName("LoggingFilter");
+        logFilterDef.setFilterClass(LoggingFilter.class.getName());
+        ctx.addFilterDef(logFilterDef);
+
+        FilterMap logFilterMap = new FilterMap();
+        logFilterMap.setFilterName("LoggingFilter");
+        logFilterMap.addURLPattern("/*");
+        ctx.addFilterMap(logFilterMap);
 
         // 2. Registrar Filtro CORS (Global)
         FilterDef corsFilterDef = new FilterDef();

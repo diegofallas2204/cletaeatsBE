@@ -426,6 +426,8 @@
         <div class="food-thumb" onclick="filterByFood('tacos')" title="Tacos">🌮<span class="tip"></span></div>
         <div class="food-thumb" onclick="filterByFood('pollo')" title="Pollo">🍗<span class="tip"></span></div>
         <div class="food-thumb" onclick="filterByFood('china')" title="China">🥡<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('mariscos')" title="Mariscos">🍤<span class="tip"></span></div>
+        <div class="food-thumb" onclick="filterByFood('bebidas')" title="Bebidas">🥤<span class="tip"></span></div>
       </div>
 
       <div class="table-wrap">
@@ -657,7 +659,7 @@ const forms = {
     <div class="form-group"><label>Tipo Comida</label>
       <select id="f_tipo_comida">
         <option value="Pizza" ${d.tipoComida==='Pizza'?'selected':''}>Pizza</option>
-        <option value="Comida Rápida" ${d.tipoComida==='Comida Rápida'?'selected':''}>Comida Rápida</option>
+        <option value="Burger" ${d.tipoComida==='Burger'?'selected':''}>Burger</option>
         <option value="Pasta" ${d.tipoComida==='Pasta'?'selected':''}>Pasta</option>
         <option value="Ensalada" ${d.tipoComida==='Ensalada'?'selected':''}>Ensalada</option>
         <option value="Sushi" ${d.tipoComida==='Sushi'?'selected':''}>Sushi</option>
@@ -666,6 +668,8 @@ const forms = {
         <option value="Tacos" ${d.tipoComida==='Tacos'?'selected':''}>Tacos</option>
         <option value="Pollo" ${d.tipoComida==='Pollo'?'selected':''}>Pollo</option>
         <option value="China" ${d.tipoComida==='China'?'selected':''}>China</option>
+        <option value="Mariscos" ${d.tipoComida==='Mariscos'?'selected':''}>Mariscos</option>
+        <option value="Bebidas" ${d.tipoComida==='Bebidas'?'selected':''}>Bebidas</option>
       </select>
     </div>
     <div class="form-group"><label>Dirección</label><input id="f_direccion" value="${d.direccion||''}"/></div>`,

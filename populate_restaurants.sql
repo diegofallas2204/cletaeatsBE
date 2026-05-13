@@ -1,5 +1,5 @@
 -- ========================================
--- SCRIPT PARA POBLAR RESTAURANTES Y COMBOS
+-- SCRIPT PARA POBLAR RESTAURANTES Y COMBOS (CORREGIDO)
 -- ========================================
 USE cletaeats;
 
@@ -11,7 +11,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 1. INSERTAR RESTAURANTES (Uno por categoría)
 INSERT INTO restaurantes (id, nombre, cedula_juridica, direccion, tipo_comida) VALUES 
 (1, 'Pizzeria La Nonna', '3-101-000001', 'Heredia, Centro', 'Pizza'),
-(2, 'Burger Factory', '3-101-000002', 'San Jose, Escazu', 'Comida Rápida'),
+(2, 'Burger Factory', '3-101-000002', 'San Jose, Escazu', 'Burger'),
 (3, 'Pasta Italia', '3-101-000003', 'Alajuela, Centro', 'Pasta'),
 (4, 'Green Garden', '3-101-000004', 'Cartago, Centro', 'Ensalada'),
 (5, 'Sakura Sushi', '3-101-000005', 'Heredia, Belen', 'Sushi'),
@@ -19,18 +19,19 @@ INSERT INTO restaurantes (id, nombre, cedula_juridica, direccion, tipo_comida) V
 (7, 'Sweet Delights', '3-101-000007', 'Alajuela, Guacima', 'Postres'),
 (8, 'Taco Loco', '3-101-000008', 'Cartago, Paraiso', 'Tacos'),
 (9, 'Crispy Chicken', '3-101-000009', 'Heredia, San Joaquin', 'Pollo'),
-(10, 'Great Wall', '3-101-000010', 'San Jose, Barrio Chino', 'China');
+(10, 'Great Wall', '3-101-000010', 'San Jose, Barrio Chino', 'China'),
+(11, 'Mariscos del Puerto', '3-101-000011', 'Puntarenas, Paseo de los Turistas', 'Mariscos'),
+(12, 'Smoothie Bar', '3-101-000012', 'Guanacaste, Tamarindo', 'Bebidas');
 
 -- 2. INSERTAR COMBOS (6 por restaurante)
 -- Lógica de precio: (numero_combo * 1000) + 3000
--- Combo 1: 4000, 2: 5000, 3: 6000, 4: 7000, 5: 8000, 6: 9000
 
 -- Restaurante 1: Pizza
 INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES 
 (1, 1, 'Margarita Personal', 4000), (1, 2, 'Pepperoni Mediana', 5000), (1, 3, 'Suprema Grande', 6000),
 (1, 4, 'Hawaiana Familiar', 7000), (1, 5, 'Veggie Lover', 8000), (1, 6, 'Meat Lovers King', 9000);
 
--- Restaurante 2: Comida Rápida
+-- Restaurante 2: Burger
 INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES 
 (2, 1, 'Classic Burger', 4000), (2, 2, 'Double Cheese', 5000), (2, 3, 'Bacon Monster', 6000),
 (2, 4, 'Crispy Chicken Sandwich', 7000), (2, 5, 'Fish Burger Meal', 8000), (2, 6, 'The Ultimate Factory', 9000);
@@ -74,3 +75,13 @@ INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES
 INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES 
 (10, 1, 'Arroz Frito + Chop Suey', 4000), (10, 2, 'Pollo Agridulce', 5000), (10, 3, 'Cerdo al Jengibre', 6000),
 (10, 4, 'Sopa de Wantán', 7000), (10, 5, 'Pato Pekín Porción', 8000), (10, 6, 'Gran Buffet Imperial', 9000);
+
+-- Restaurante 11: Mariscos
+INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES 
+(11, 1, 'Ceviche Mixto', 4000), (11, 2, 'Filete de Pargo', 5000), (11, 3, 'Arroz con Calamares', 6000),
+(11, 4, 'Langosta a la Mantequilla', 7000), (11, 5, 'Sopa de Mariscos', 8000), (11, 6, 'Gran Banquete Marino', 9000);
+
+-- Restaurante 12: Bebidas
+INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES 
+(12, 1, 'Smoothie Tropical', 4000), (12, 2, 'Jugo Natural Grande', 5000), (12, 3, 'Batido de Fresa', 6000),
+(12, 4, 'Limonada Imperial', 7000), (12, 5, 'Té Frío Artesanal', 8000), (12, 6, 'Pack 4 Bebidas Premium', 9000);
