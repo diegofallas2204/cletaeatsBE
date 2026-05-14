@@ -132,3 +132,40 @@ CREATE TABLE quejas (
                         FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
                         FOREIGN KEY (repartidor_id) REFERENCES repartidores(id)
 ) ENGINE=InnoDB;
+
+-- ========================================
+-- 10. TARJETAS CLIENTE
+-- ========================================
+CREATE TABLE tarjetas_cliente (
+                                  id INT AUTO_INCREMENT PRIMARY KEY,
+                                  cliente_id INT NOT NULL,
+                                  numero_tarjeta VARCHAR(20) NOT NULL,
+                                  fecha_vencimiento VARCHAR(5) NOT NULL,
+                                  cvv VARCHAR(4) NOT NULL,
+                                  FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ========================================
+-- DATOS DE PRUEBA (MOCK DATA)
+-- ========================================
+-- Usuarios
+INSERT INTO usuarios (username, password, rol) VALUES ('cliente1', 'pass123', 'cliente');
+INSERT INTO usuarios (username, password, rol) VALUES ('repartidor1', 'pass123', 'repartidor');
+INSERT INTO usuarios (username, password, rol) VALUES ('admin1', 'pass123', 'admin');
+
+-- Clientes y Repartidores
+INSERT INTO clientes (usuario_id, cedula, nombre, direccion, telefono, email) VALUES (1, '1-1111-1111', 'Juan Perez', 'San Jose Centro', '88888888', 'juan@test.com');
+INSERT INTO repartidores (usuario_id, cedula, nombre, direccion, telefono, email) VALUES (2, '2-2222-2222', 'Carlos Gomez', 'Alajuela', '77777777', 'carlos@test.com');
+INSERT INTO admins (usuario_id, nombre) VALUES (3, 'Admin Cleta');
+
+-- Tarjetas
+INSERT INTO tarjetas_cliente (cliente_id, numero_tarjeta, fecha_vencimiento, cvv) VALUES (1, '**** **** **** 1234', '12/25', '123');
+
+-- Restaurantes
+INSERT INTO restaurantes (nombre, cedula_juridica, direccion, tipo_comida) VALUES ('Pizza Hutt', '3-101-123456', 'San Pedro', 'Pizza');
+INSERT INTO restaurantes (nombre, cedula_juridica, direccion, tipo_comida) VALUES ('Burger King', '3-101-654321', 'Escazu', 'Burger');
+
+-- Combos
+INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES (1, 1, 'Combo Pizza Personal', 4000);
+INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES (1, 2, 'Combo Pizza Grande', 5000);
+INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES (2, 1, 'Combo Whopper', 4000);
