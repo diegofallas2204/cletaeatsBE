@@ -9,10 +9,10 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
 
-import java.io.File;
-import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -93,27 +93,33 @@ public class Main {
     }
 
     private static String resolveWebAdminPath() throws Exception {
-        Path cwd = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
-        Path candidate = cwd.resolve("web-admin");
-        if (candidate.toFile().exists()) {
-            return candidate.toAbsolutePath().toString();
+        String envPath = System.getenv("WEB_ADMIN_PATH");
+        if (envPath != null && !envPath.isBlank()) {
+            Path envDir = Paths.get(envPath).toAbsolutePath().normalize();
+            if (Files.isDirectory(envDir)) {
+                return envDir.toString();
+            }
+            throw new IllegalStateException("WEB_ADMIN_PATH está definido pero no apunta a un directorio válido: " + envDir);
         }
 
-        URI jarLocation = Main.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-        Path jarDir = Paths.get(jarLocation).getParent();
-        Path[] possibleRoots = new Path[] {
+        Path cwd = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
+        Path jarLocation = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        Path jarDir = jarLocation.getParent();
+
+        List<Path> possibleRoots = List.of(
+                cwd.resolve("web-admin"),
                 jarDir.resolve("web-admin"),
                 jarDir.getParent() != null ? jarDir.getParent().resolve("web-admin") : jarDir.resolve("web-admin"),
                 jarDir.getParent() != null && jarDir.getParent().getParent() != null ? jarDir.getParent().getParent().resolve("web-admin") : jarDir.resolve("web-admin")
-        };
+        );
 
-        for (Path path : possibleRoots) {
-            Path normalized = path.toAbsolutePath().normalize();
-            if (normalized.toFile().exists()) {
+        for (Path candidate : possibleRoots) {
+            Path normalized = candidate.toAbsolutePath().normalize();
+            if (Files.isDirectory(normalized)) {
                 return normalized.toString();
             }
         }
 
-        throw new IllegalStateException("No se encontró la carpeta web-admin en el directorio actual ni relativo al JAR");
+        throw new IllegalStateException("No se encontró la carpeta web-admin. Se buscaron estas rutas: " + possibleRoots);
     }
 }

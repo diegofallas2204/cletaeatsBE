@@ -13,7 +13,9 @@ FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
 COPY --from=build /app/target/cletaeats-1.0-jar-with-dependencies.jar /app/app.jar
+COPY web-admin /app/web-admin
+ENV WEB_ADMIN_PATH=/app/web-admin
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "java -jar /app/app.jar"]
+CMD ["java", "-jar", "/app/app.jar"]
