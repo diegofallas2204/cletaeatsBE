@@ -10,17 +10,26 @@ import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
 
 import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Main {
     public static void main(String[] args) throws Exception {
         System.out.println("Iniciando Tomcat Embebido...");
 
         Tomcat tomcat = new Tomcat();
-        tomcat.setPort(8080);
-        tomcat.getConnector(); // Inicializa el conector por defecto
 
-        // Crear un contexto base
-        Context ctx = tomcat.addContext("", new File(".").getAbsolutePath());
+        int port = Integer.parseInt(
+                System.getenv().getOrDefault("PORT", "8080")
+        );
+
+        tomcat.setPort(port);
+        tomcat.getConnector();
+
+        // Crear un contexto base con el directorio actual del proceso.
+        String baseDir = Paths.get(System.getProperty("user.dir")).toAbsolutePath().toString();
+        Context ctx = tomcat.addContext("", baseDir);
 
         // 1. Registrar el Servlets
         Tomcat.addServlet(ctx, "UsuarioServlet", new UsuarioServlet());
@@ -39,7 +48,7 @@ public class Main {
         ctx.addServletMappingDecoded("/api/restaurantes/*", "RestauranteServlet");
 
         // Servir archivos estáticos del admin
-        String webAdminPath = new File("web-admin").getAbsolutePath();
+        String webAdminPath = resolveWebAdminPath();
         Context adminCtx = tomcat.addContext("/admin", webAdminPath);
         Tomcat.addServlet(adminCtx, "default", "org.apache.catalina.servlets.DefaultServlet");
         adminCtx.addServletMappingDecoded("/", "default");
@@ -79,7 +88,32 @@ public class Main {
 
         // 4. Arrancar el servidor
         tomcat.start();
-        System.out.println("Servidor corriendo en http://localhost:8080");
+        System.out.println("Servidor corriendo en http://localhost:" + port);
         tomcat.getServer().await(); // Mantiene el programa en ejecución
+    }
+
+    private static String resolveWebAdminPath() throws Exception {
+        Path cwd = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
+        Path candidate = cwd.resolve("web-admin");
+        if (candidate.toFile().exists()) {
+            return candidate.toAbsolutePath().toString();
+        }
+
+        URI jarLocation = Main.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+        Path jarDir = Paths.get(jarLocation).getParent();
+        Path[] possibleRoots = new Path[] {
+                jarDir.resolve("web-admin"),
+                jarDir.getParent() != null ? jarDir.getParent().resolve("web-admin") : jarDir.resolve("web-admin"),
+                jarDir.getParent() != null && jarDir.getParent().getParent() != null ? jarDir.getParent().getParent().resolve("web-admin") : jarDir.resolve("web-admin")
+        };
+
+        for (Path path : possibleRoots) {
+            Path normalized = path.toAbsolutePath().normalize();
+            if (normalized.toFile().exists()) {
+                return normalized.toString();
+            }
+        }
+
+        throw new IllegalStateException("No se encontró la carpeta web-admin en el directorio actual ni relativo al JAR");
     }
 }

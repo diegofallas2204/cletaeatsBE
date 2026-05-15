@@ -27,6 +27,21 @@ public class ClienteRepository {
         }
     }
 
+    public boolean crear(Cliente cliente, Connection conn) throws SQLException {
+        String sql = "INSERT INTO clientes (usuario_id, cedula, nombre, direccion, telefono, email, tarjeta, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, cliente.getUsuarioId());
+            stmt.setString(2, cliente.getCedula());
+            stmt.setString(3, cliente.getNombre());
+            stmt.setString(4, cliente.getDireccion());
+            stmt.setString(5, cliente.getTelefono());
+            stmt.setString(6, cliente.getEmail());
+            stmt.setString(7, cliente.getTarjeta());
+            stmt.setString(8, "activo");
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public Cliente buscarPorId(int id) throws SQLException {
         String sql = "SELECT * FROM clientes WHERE id = ?";
         return ejecutarConsultaUnica(sql, id);

@@ -35,10 +35,21 @@ public class ClienteServlet extends HttpServlet {
         }
 
         try {
-            String username = (String) req.getAttribute("username");
-            Usuario usuario = usuarioRepository.findByUsername(username);
-            Cliente cliente = clienteRepository.buscarPorUsuarioId(usuario.getId());
+            String username = resolveUsername(req);
+            if (username == null || username.isBlank()) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write("{\"exito\":false, \"mensaje\":\"No autorizado: token inválido o ausente\"}");
+                return;
+            }
 
+            Usuario usuario = usuarioRepository.findByUsername(username);
+            if (usuario == null) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Usuario no encontrado\"}");
+                return;
+            }
+
+            Cliente cliente = clienteRepository.buscarPorUsuarioId(usuario.getId());
             if (cliente == null) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"exito\":false, \"mensaje\":\"El usuario no tiene perfil de cliente\"}");
@@ -54,7 +65,7 @@ public class ClienteServlet extends HttpServlet {
 
             String jsonResponse = "";
             if (pathInfo.equals("/pedidos")) {
-                jsonResponse = pedidoController.crearPedido(sb.toString());
+                jsonResponse = pedidoController.crearPedido(sb.toString(), username);
             } else if (pathInfo.equals("/tarjetas")) {
                 jsonResponse = clienteController.guardarTarjeta(cliente.getId(), sb.toString());
             }
@@ -78,11 +89,21 @@ public class ClienteServlet extends HttpServlet {
         }
 
         try {
-            // Extraer el username del token validado por AuthFilter
-            String username = (String) req.getAttribute("username");
-            Usuario usuario = usuarioRepository.findByUsername(username);
-            Cliente cliente = clienteRepository.buscarPorUsuarioId(usuario.getId());
+            String username = resolveUsername(req);
+            if (username == null || username.isBlank()) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write("{\"exito\":false, \"mensaje\":\"No autorizado: token inválido o ausente\"}");
+                return;
+            }
 
+            Usuario usuario = usuarioRepository.findByUsername(username);
+            if (usuario == null) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Usuario no encontrado\"}");
+                return;
+            }
+
+            Cliente cliente = clienteRepository.buscarPorUsuarioId(usuario.getId());
             if (cliente == null) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"exito\":false, \"mensaje\":\"El usuario no tiene perfil de cliente\"}");
@@ -101,5 +122,15 @@ public class ClienteServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno: " + e.getMessage() + "\"}");
         }
+    }
+
+    private String resolveUsername(HttpServletRequest req) {
+        String username = (String) req.getAttribute("username");
+        if (username == null || username.isBlank()) {
+            if (req.getUserPrincipal() != null) {
+                username = req.getUserPrincipal().getName();
+            }
+        }
+        return username;
     }
 }

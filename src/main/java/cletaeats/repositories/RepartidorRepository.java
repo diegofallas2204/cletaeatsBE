@@ -27,6 +27,23 @@ public class RepartidorRepository {
         }
     }
 
+    public boolean crear(Repartidor r, Connection conn) throws SQLException {
+        String sql = "INSERT INTO repartidores (usuario_id, cedula, nombre, email, direccion, telefono, tarjeta, estado, km_recorridos, amonestaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, r.getUsuarioId());
+            stmt.setString(2, r.getCedula());
+            stmt.setString(3, r.getNombre());
+            stmt.setString(4, r.getEmail());
+            stmt.setString(5, r.getDireccion());
+            stmt.setString(6, r.getTelefono());
+            stmt.setString(7, r.getTarjeta());
+            stmt.setString(8, "disponible");
+            stmt.setFloat(9, 0.0f);
+            stmt.setInt(10, 0);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public Repartidor obtenerDisponibleParaAsignacion() throws SQLException {
         // Regla de negocio: primero disponible con menos de 4 amonestaciones
         String sql = "SELECT * FROM repartidores WHERE estado = 'disponible' AND amonestaciones < 4 LIMIT 1";

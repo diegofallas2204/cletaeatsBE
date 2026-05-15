@@ -69,6 +69,20 @@ public class ComboRepository {
         }
     }
 
+    public Combo buscarPorId(int id) throws SQLException {
+        String sql = "SELECT * FROM combos WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapearResultSetACombo(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     private Combo mapearResultSetACombo(ResultSet rs) throws SQLException {
         Combo c = new Combo();
         c.setId(rs.getInt("id"));

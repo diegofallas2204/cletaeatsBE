@@ -3,7 +3,7 @@ package cletaeats.models;
 public class DetallePedido {
     private int id;
     private int pedidoId;
-    private int comboId;
+    private Integer comboId;
     private int cantidad;
     private float precioUnitario;
     private boolean agrandado;
@@ -16,8 +16,8 @@ public class DetallePedido {
     public void setId(int id) { this.id = id; }
     public int getPedidoId() { return pedidoId; }
     public void setPedidoId(int pedidoId) { this.pedidoId = pedidoId; }
-    public int getComboId() { return comboId; }
-    public void setComboId(int comboId) { this.comboId = comboId; }
+    public Integer getComboId() { return comboId; }
+    public void setComboId(Integer comboId) { this.comboId = comboId; }
     public int getCantidad() { return cantidad; }
     public void setCantidad(int cantidad) { this.cantidad = cantidad; }
     public float getPrecioUnitario() { return precioUnitario; }

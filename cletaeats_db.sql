@@ -126,7 +126,7 @@ CREATE TABLE pedido_detalle (
 CREATE TABLE quejas (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         pedido_id INT NOT NULL,
-                        repartidor_id INT NOT NULL, -- Referencia directa para reportes rápidos
+                        repartidor_id INT NOT NULL, -- Referencia directa para reportes r�pidos
                         descripcion TEXT NOT NULL,
                         fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
@@ -146,26 +146,76 @@ CREATE TABLE tarjetas_cliente (
 ) ENGINE=InnoDB;
 
 -- ========================================
--- DATOS DE PRUEBA (MOCK DATA)
+-- DATOS DE PRUEBA UNIFICADOS (MOCK DATA)
 -- ========================================
--- Usuarios
-INSERT INTO usuarios (username, password, rol) VALUES ('cliente1', 'pass123', 'cliente');
-INSERT INTO usuarios (username, password, rol) VALUES ('repartidor1', 'pass123', 'repartidor');
-INSERT INTO usuarios (username, password, rol) VALUES ('admin1', 'pass123', 'admin');
+-- Este script conserva la estructura actual de la base de datos.
+-- No se insertan usuarios, clientes, repartidores ni tarjetas_cliente,
+-- ya que esos datos se utilizan para tus pruebas y se mantienen separados.
 
--- Clientes y Repartidores
-INSERT INTO clientes (usuario_id, cedula, nombre, direccion, telefono, email) VALUES (1, '1-1111-1111', 'Juan Perez', 'San Jose Centro', '88888888', 'juan@test.com');
-INSERT INTO repartidores (usuario_id, cedula, nombre, direccion, telefono, email) VALUES (2, '2-2222-2222', 'Carlos Gomez', 'Alajuela', '77777777', 'carlos@test.com');
-INSERT INTO admins (usuario_id, nombre) VALUES (3, 'Admin Cleta');
-
--- Tarjetas
-INSERT INTO tarjetas_cliente (cliente_id, numero_tarjeta, fecha_vencimiento, cvv) VALUES (1, '**** **** **** 1234', '12/25', '123');
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE quejas;
+TRUNCATE TABLE pedido_detalle;
+TRUNCATE TABLE pedidos;
+TRUNCATE TABLE combos;
+TRUNCATE TABLE restaurantes;
+TRUNCATE TABLE admins;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- Restaurantes
-INSERT INTO restaurantes (nombre, cedula_juridica, direccion, tipo_comida) VALUES ('Pizza Hutt', '3-101-123456', 'San Pedro', 'Pizza');
-INSERT INTO restaurantes (nombre, cedula_juridica, direccion, tipo_comida) VALUES ('Burger King', '3-101-654321', 'Escazu', 'Burger');
+INSERT INTO restaurantes (nombre, cedula_juridica, direccion, tipo_comida) VALUES
+('Pizzeria La Nonna', '3-101-000001', 'Heredia, Centro', 'Pizza'),
+('Burger Factory', '3-101-000002', 'San Jose, Escazu', 'Burger'),
+('Pasta Italia', '3-101-000003', 'Alajuela, Centro', 'Pasta'),
+('Green Garden', '3-101-000004', 'Cartago, Centro', 'Ensalada'),
+('Sakura Sushi', '3-101-000005', 'Heredia, Belen', 'Sushi'),
+('Aroma Cafe', '3-101-000006', 'San Jose, Curridabat', 'Cafe'),
+('Sweet Delights', '3-101-000007', 'Alajuela, Guacima', 'Postres'),
+('Taco Loco', '3-101-000008', 'Cartago, Paraiso', 'Tacos'),
+('Crispy Chicken', '3-101-000009', 'Heredia, San Joaquin', 'Pollo'),
+('Great Wall', '3-101-000010', 'San Jose, Barrio Chino', 'China'),
+('Mariscos del Puerto', '3-101-000011', 'Puntarenas, Paseo de los Turistas', 'Mariscos'),
+('Smoothie Bar', '3-101-000012', 'Guanacaste, Tamarindo', 'Bebidas');
 
 -- Combos
-INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES (1, 1, 'Combo Pizza Personal', 4000);
-INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES (1, 2, 'Combo Pizza Grande', 5000);
-INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES (2, 1, 'Combo Whopper', 4000);
+INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES
+(1, 1, 'Margarita Personal', 4000), (1, 2, 'Pepperoni Mediana', 5000), (1, 3, 'Suprema Grande', 6000),
+(1, 4, 'Hawaiana Familiar', 7000), (1, 5, 'Veggie Lover', 8000), (1, 6, 'Meat Lovers King', 9000),
+(2, 1, 'Classic Burger', 4000), (2, 2, 'Double Cheese', 5000), (2, 3, 'Bacon Monster', 6000),
+(2, 4, 'Crispy Chicken Sandwich', 7000), (2, 5, 'Fish Burger Meal', 8000), (2, 6, 'The Ultimate Factory', 9000),
+(3, 1, 'Spaghetti Pomodoro', 4000), (3, 2, 'Fettuccine Alfredo', 5000), (3, 3, 'Lasagna de Carne', 6000),
+(3, 4, 'Penne Arrabiata', 7000), (3, 5, 'Ravioli de Queso', 8000), (3, 6, 'Gnocchi al Pesto', 9000),
+(4, 1, 'Ensalada Cesar', 4000), (4, 2, 'Greek Salad', 5000), (4, 3, 'Quinoa Bowl', 6000),
+(4, 4, 'Santa Fe Chicken', 7000), (4, 5, 'Tuna Poke Salad', 8000), (4, 6, 'Superfood Mix', 9000),
+(5, 1, 'California Roll', 4000), (5, 2, 'Philadelphia Roll', 5000), (5, 3, 'Spicy Tuna', 6000),
+(5, 4, 'Tiger Roll', 7000), (5, 5, 'Dragon Roll Especial', 8000), (5, 6, 'Chef Platter 20pcs', 9000),
+(6, 1, 'Expresso + Muffin', 4000), (6, 2, 'Capuccino + Croissant', 5000), (6, 3, 'Latte + Tarta', 6000),
+(6, 4, 'Mocha + Cheesecake', 7000), (6, 5, 'Frappe + Brownie', 8000), (6, 6, 'Coffee Lovers Pack', 9000),
+(7, 1, 'Copa de Helado', 4000), (7, 2, 'Porcion de Tiramisu', 5000), (7, 3, 'Tres Leches', 6000),
+(7, 4, 'Pie de Limon', 7000), (7, 5, 'Volcan de Chocolate', 8000), (7, 6, 'Mega Dessert Platter', 9000),
+(8, 1, 'Taco al Pastor (3)', 4000), (8, 2, 'Gringa de Pollo', 5000), (8, 3, 'Quesabirria', 6000),
+(8, 4, 'Burrito Supremo', 7000), (8, 5, 'Enchiladas Suizas', 8000), (8, 6, 'Taco Loco Family Pack', 9000),
+(9, 1, '2 Piezas + Papas', 4000), (9, 2, '3 Piezas + Acompanamiento', 5000), (9, 3, 'Burger de Pollo', 6000),
+(9, 4, 'Bucket 8 Piezas', 7000), (9, 5, 'Bucket 12 Piezas', 8000), (9, 6, 'Bucket Familiar Completo', 9000),
+(10, 1, 'Arroz Frito + Chop Suey', 4000), (10, 2, 'Pollo Agridulce', 5000), (10, 3, 'Cerdo al Jengibre', 6000),
+(10, 4, 'Sopa de Wonton', 7000), (10, 5, 'Pato Pekin Porcion', 8000), (10, 6, 'Gran Buffet Imperial', 9000),
+(11, 1, 'Ceviche Mixto', 4000), (11, 2, 'Filete de Pargo', 5000), (11, 3, 'Arroz con Calamares', 6000),
+(11, 4, 'Langosta a la Mantequilla', 7000), (11, 5, 'Sopa de Mariscos', 8000), (11, 6, 'Gran Banquete Marino', 9000),
+(12, 1, 'Smoothie Tropical', 4000), (12, 2, 'Jugo Natural Grande', 5000), (12, 3, 'Batido de Fresa', 6000),
+(12, 4, 'Limonada Imperial', 7000), (12, 5, 'Te Frio Artesanal', 8000), (12, 6, 'Pack 4 Bebidas Premium', 9000);
+
+-- Admin (requiere que el usuario admin ya exista en la tabla usuarios)
+--INSERT INTO admins (usuario_id, nombre) VALUES
+--(3, 'Admin Cleta');
+
+-- Pedidos de ejemplo (requieren cliente y repartidor existentes)
+--INSERT INTO pedidos (cliente_id, restaurante_id, repartidor_id, estado, distancia_km, subtotal, costo_envio, iva, total) VALUES
+--(1, 1, 2, 'entregado', 5.5, 9000, 1500, 1170, 11670),
+--(1, 1, NULL, 'preparacion', 3.0, 4000, 1000, 520, 5520);
+
+--INSERT INTO pedido_detalle (pedido_id, combo_id, cantidad, precio_unitario, agrandado, notas) VALUES
+--(1, 1, 1, 4000, FALSE, 'Sin cebolla'),
+--(1, 2, 1, 5000, TRUE, 'Extra queso'),
+--(2, 1, 1, 4000, FALSE, 'Normal');
+
+--INSERT INTO quejas (pedido_id, repartidor_id, descripcion) VALUES
+--(1, 2, 'La orden llego fria y con retraso');

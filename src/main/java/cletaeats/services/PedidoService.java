@@ -9,28 +9,59 @@ public class PedidoService {
     private final PedidoRepository pedidoRepo = new PedidoRepository();
     private final ClienteRepository clienteRepo = new ClienteRepository();
     private final RepartidorRepository repartidorRepo = new RepartidorRepository();
+    private final UsuarioRepository usuarioRepo = new UsuarioRepository();
+    private final ComboRepository comboRepo = new ComboRepository();
+    private final MetodoPagoRepository metodoPagoRepo = new MetodoPagoRepository();
 
-    public int procesarNuevoPedido(Pedido pedido, boolean esFeriado) throws Exception {
-        // 1. Validar Cliente
-        Cliente cliente = clienteRepo.buscarPorId(pedido.getClienteId());
+    public int procesarNuevoPedido(Pedido pedido, boolean esFeriado, String username) throws Exception {
+        if (username == null || username.isBlank()) {
+            throw new Exception("Usuario no autenticado");
+        }
+
+        Usuario usuario = usuarioRepo.findByUsername(username);
+        if (usuario == null) {
+            throw new Exception("Usuario autenticado no encontrado");
+        }
+
+        Cliente cliente = clienteRepo.buscarPorUsuarioId(usuario.getId());
         if (cliente == null) throw new Exception("Cliente no existe");
         if (!"activo".equals(cliente.getEstado())) {
             throw new Exception("El cliente está suspendido y no puede realizar pedidos");
         }
 
+        String numeroTarjeta = pedido.getNumeroTarjeta();
+        if (numeroTarjeta == null || numeroTarjeta.isBlank() || !metodoPagoRepo.existeTarjetaCliente(cliente.getId(), numeroTarjeta)) {
+            throw new Exception("Método de pago no válido");
+        }
+
+        // Ignorar el clienteId enviado desde el payload y usar siempre el cliente del token.
+        pedido.setClienteId(cliente.getId());
+
         // 2. Asignar Repartidor Automáticamente (Requerimiento 8.4)
         Repartidor disponible = repartidorRepo.obtenerDisponibleParaAsignacion();
         if (disponible == null) {
-            throw new Exception("No hay repartidores disponibles en este momento");
+            // No hay repartidor disponible ahora; el pedido se crea igual y queda en preparación.
+            pedido.setRepartidorId(0);
+        } else {
+            pedido.setRepartidorId(disponible.getId());
         }
-        pedido.setRepartidorId(disponible.getId());
 
         // 3. Cálculos Financieros
         float subtotal = 0;
         for (DetallePedido det : pedido.getDetalles()) {
-            // Según Enunciado: Combo 1 = 4000, Combo 2 = 5000...
-            // Lógica: (numero_combo * 1000) + 3000
-            float precioCombo = (det.getComboId() * 1000) + 3000;
+            if (det == null) {
+                throw new Exception("Detalle del pedido inválido");
+            }
+            Integer comboId = det.getComboId();
+            if (comboId == null || comboId == 0) {
+                throw new Exception("comboId inválido en detalle de pedido: " + comboId);
+            }
+            var combo = comboRepo.buscarPorId(comboId);
+            if (combo == null) {
+                throw new Exception("Combo no encontrado para comboId: " + comboId);
+            }
+
+            float precioCombo = combo.getPrecio();
             det.setPrecioUnitario(precioCombo);
             subtotal += (precioCombo * det.getCantidad());
         }
@@ -49,9 +80,11 @@ public class PedidoService {
         pedido.setTotal(total);
         pedido.setEstado("preparacion");
 
-        // 6. Guardar y Cambiar estado del repartidor a ocupado
+        // 6. Guardar y cambiar estado del repartidor a ocupado solo si se asignó uno.
         int idPedido = pedidoRepo.crearPedido(pedido);
-        repartidorRepo.actualizarEstado(disponible.getId(), "ocupado");
+        if (disponible != null) {
+            repartidorRepo.actualizarEstado(disponible.getId(), "ocupado");
+        }
 
         return idPedido;
     }
