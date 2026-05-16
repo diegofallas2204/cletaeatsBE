@@ -16,6 +16,7 @@ public class Pedido {
     private float distanciaKm;
     private String fechaPedido;
     private String fechaEntrega;
+    private String numeroTarjeta;
     private List<DetallePedido> detalles;
 
     public Pedido() {
@@ -43,6 +44,12 @@ public class Pedido {
     public void setTotal(float total) { this.total = total; }
     public float getDistanciaKm() { return distanciaKm; }
     public void setDistanciaKm(float distanciaKm) { this.distanciaKm = distanciaKm; }
+    public String getFechaPedido() { return fechaPedido; }
+    public void setFechaPedido(String fechaPedido) { this.fechaPedido = fechaPedido; }
+    public String getFechaEntrega() { return fechaEntrega; }
+    public void setFechaEntrega(String fechaEntrega) { this.fechaEntrega = fechaEntrega; }
+    public String getNumeroTarjeta() { return numeroTarjeta; }
+    public void setNumeroTarjeta(String numeroTarjeta) { this.numeroTarjeta = numeroTarjeta; }
     public List<DetallePedido> getDetalles() { return detalles; }
     public void setDetalles(List<DetallePedido> detalles) { this.detalles = detalles; }
 }

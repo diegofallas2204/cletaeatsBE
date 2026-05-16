@@ -21,6 +21,19 @@ public class ComboRepository {
         }
     }
 
+    public List<Combo> listarTodos() throws SQLException {
+        List<Combo> lista = new ArrayList<>();
+        String sql = "SELECT * FROM combos";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapearResultSetACombo(rs));
+            }
+        }
+        return lista;
+    }
+
     public List<Combo> listarPorRestaurante(int restauranteId) throws SQLException {
         List<Combo> lista = new ArrayList<>();
         String sql = "SELECT * FROM combos WHERE restaurante_id = ?";
@@ -54,6 +67,20 @@ public class ComboRepository {
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         }
+    }
+
+    public Combo buscarPorId(int id) throws SQLException {
+        String sql = "SELECT * FROM combos WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapearResultSetACombo(rs);
+                }
+            }
+        }
+        return null;
     }
 
     private Combo mapearResultSetACombo(ResultSet rs) throws SQLException {

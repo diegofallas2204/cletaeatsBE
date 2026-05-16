@@ -34,12 +34,12 @@ public class UsuarioController {
     public String registrar(String jsonInput) {
         try {
             Usuario nuevo = gson.fromJson(jsonInput, Usuario.class);
-            int id = authService.registrarUsuarioBase(nuevo.getUsername(), nuevo.getPassword(), nuevo.getRol());
-            
+            int id = authService.registrarUsuarioBase(nuevo);
+
             nuevo.setId(id);
             nuevo.setActivo(true); // Reflejar el estado real en la base de datos
             nuevo.setPassword(null); // Ocultar la contraseña por seguridad en la respuesta
-            
+
             return gson.toJson(RespuestaJSON.exito(nuevo));
         } catch (Exception e) {
             return gson.toJson(RespuestaJSON.fallar(e.getMessage()));

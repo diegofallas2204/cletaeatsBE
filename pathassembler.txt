@@ -1,0 +1,66 @@
+﻿Compiled from "PathAssembler.java"
+public class org.apache.maven.wrapper.PathAssembler {
+  public static final java.lang.String MAVEN_USER_HOME_STRING;
+
+  public static final java.lang.String PROJECT_STRING;
+
+  public org.apache.maven.wrapper.PathAssembler();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public org.apache.maven.wrapper.PathAssembler(java.nio.file.Path);
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: aload_1
+       6: putfield      #7                  // Field mavenUserHome:Ljava/nio/file/Path;
+       9: return
+
+  public org.apache.maven.wrapper.PathAssembler$LocalDistribution getDistribution(org.apache.maven.wrapper.WrapperConfiguration);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #13                 // Method org/apache/maven/wrapper/WrapperConfiguration.getDistribution:()Ljava/net/URI;
+       5: invokespecial #19                 // Method getBaseName:(Ljava/net/URI;)Ljava/lang/String;
+       8: astore_2
+       9: aload_0
+      10: aload_2
+      11: invokespecial #23                 // Method removeExtension:(Ljava/lang/String;)Ljava/lang/String;
+      14: astore_3
+      15: aload_0
+      16: aload_3
+      17: aload_1
+      18: invokespecial #27                 // Method rootDirName:(Ljava/lang/String;Lorg/apache/maven/wrapper/WrapperConfiguration;)Ljava/nio/file/Path;
+      21: astore        4
+      23: aload_0
+      24: aload_1
+      25: invokevirtual #31                 // Method org/apache/maven/wrapper/WrapperConfiguration.getDistributionBase:()Ljava/lang/String;
+      28: invokespecial #35                 // Method getBaseDir:(Ljava/lang/String;)Ljava/nio/file/Path;
+      31: aload_1
+      32: invokevirtual #39                 // Method org/apache/maven/wrapper/WrapperConfiguration.getDistributionPath:()Ljava/nio/file/Path;
+      35: invokeinterface #43,  2           // InterfaceMethod java/nio/file/Path.resolve:(Ljava/nio/file/Path;)Ljava/nio/file/Path;
+      40: aload         4
+      42: invokeinterface #43,  2           // InterfaceMethod java/nio/file/Path.resolve:(Ljava/nio/file/Path;)Ljava/nio/file/Path;
+      47: astore        5
+      49: aload_0
+      50: aload_1
+      51: invokevirtual #49                 // Method org/apache/maven/wrapper/WrapperConfiguration.getZipBase:()Ljava/lang/String;
+      54: invokespecial #35                 // Method getBaseDir:(Ljava/lang/String;)Ljava/nio/file/Path;
+      57: aload_1
+      58: invokevirtual #52                 // Method org/apache/maven/wrapper/WrapperConfiguration.getZipPath:()Ljava/nio/file/Path;
+      61: invokeinterface #43,  2           // InterfaceMethod java/nio/file/Path.resolve:(Ljava/nio/file/Path;)Ljava/nio/file/Path;
+      66: aload         4
+      68: invokeinterface #43,  2           // InterfaceMethod java/nio/file/Path.resolve:(Ljava/nio/file/Path;)Ljava/nio/file/Path;
+      73: aload_2
+      74: invokeinterface #55,  2           // InterfaceMethod java/nio/file/Path.resolve:(Ljava/lang/String;)Ljava/nio/file/Path;
+      79: astore        6
+      81: new           #57                 // class org/apache/maven/wrapper/PathAssembler$LocalDistribution
+      84: dup
+      85: aload         5
+      87: aload         6
+      89: invokespecial #59                 // Method org/apache/maven/wrapper/PathAssembler$LocalDistribution."<init>":(Ljava/nio/file/Path;Ljava/nio/file/Path;)V
+      92: areturn
+}

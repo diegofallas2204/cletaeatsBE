@@ -1,17 +1,18 @@
 -- ========================================
--- BASE DE DATOS CLETAEATS
+-- BASE DE DATOS CLETAEATS EN RAILWAY
 -- ========================================
-DROP DATABASE IF EXISTS cletaeats;
-CREATE DATABASE cletaeats CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE cletaeats;
+-- Este script está adaptado para ejecutarse en la base de datos `railway`
+-- usando tu conexión MySQL de Railway.
+
+USE railway;
 
 -- ========================================
 -- 1. USUARIOS (LOGIN)
 -- ========================================
-CREATE TABLE usuarios (
+CREATE TABLE IF NOT EXISTS usuarios (
                           id INT AUTO_INCREMENT PRIMARY KEY,
                           username VARCHAR(50) UNIQUE NOT NULL,
-                          password VARCHAR(255) NOT NULL, -- Recomendado para hashes
+                          password VARCHAR(255) NOT NULL,
                           rol ENUM('cliente','repartidor','admin') NOT NULL,
                           activo BOOLEAN DEFAULT TRUE
 ) ENGINE=InnoDB;
@@ -19,7 +20,7 @@ CREATE TABLE usuarios (
 -- ========================================
 -- 2. CLIENTES
 -- ========================================
-CREATE TABLE clientes (
+CREATE TABLE IF NOT EXISTS clientes (
                           id INT AUTO_INCREMENT PRIMARY KEY,
                           usuario_id INT UNIQUE NOT NULL,
                           cedula VARCHAR(20) UNIQUE NOT NULL,
@@ -35,7 +36,7 @@ CREATE TABLE clientes (
 -- ========================================
 -- 3. REPARTIDORES
 -- ========================================
-CREATE TABLE repartidores (
+CREATE TABLE IF NOT EXISTS repartidores (
                               id INT AUTO_INCREMENT PRIMARY KEY,
                               usuario_id INT UNIQUE NOT NULL,
                               cedula VARCHAR(20) UNIQUE NOT NULL,
@@ -53,7 +54,7 @@ CREATE TABLE repartidores (
 -- ========================================
 -- 4. ADMINS
 -- ========================================
-CREATE TABLE admins (
+CREATE TABLE IF NOT EXISTS admins (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         usuario_id INT UNIQUE NOT NULL,
                         nombre VARCHAR(100),
@@ -63,7 +64,7 @@ CREATE TABLE admins (
 -- ========================================
 -- 5. RESTAURANTES
 -- ========================================
-CREATE TABLE restaurantes (
+CREATE TABLE IF NOT EXISTS restaurantes (
                               id INT AUTO_INCREMENT PRIMARY KEY,
                               nombre VARCHAR(100) NOT NULL,
                               cedula_juridica VARCHAR(50) UNIQUE NOT NULL,
@@ -74,12 +75,12 @@ CREATE TABLE restaurantes (
 -- ========================================
 -- 6. COMBOS
 -- ========================================
-CREATE TABLE combos (
+CREATE TABLE IF NOT EXISTS combos (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         restaurante_id INT NOT NULL,
                         numero_combo INT NOT NULL CHECK (numero_combo BETWEEN 1 AND 9),
                         nombre VARCHAR(100) NOT NULL,
-                        precio FLOAT NOT NULL, -- Calculado en Java: (numero_combo * 1000) + 3000
+                        precio FLOAT NOT NULL,
                         FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE,
                         UNIQUE(restaurante_id, numero_combo)
 ) ENGINE=InnoDB;
@@ -87,13 +88,13 @@ CREATE TABLE combos (
 -- ========================================
 -- 7. PEDIDOS
 -- ========================================
-CREATE TABLE pedidos (
+CREATE TABLE IF NOT EXISTS pedidos (
                          id INT AUTO_INCREMENT PRIMARY KEY,
                          cliente_id INT NOT NULL,
                          restaurante_id INT NOT NULL,
                          repartidor_id INT,
                          estado ENUM('preparacion','camino','entregado','suspendido') DEFAULT 'preparacion',
-                         distancia_km FLOAT DEFAULT 0, -- Necesario para calcular costo_envio
+                         distancia_km FLOAT DEFAULT 0,
                          subtotal FLOAT DEFAULT 0,
                          costo_envio FLOAT DEFAULT 0,
                          iva FLOAT DEFAULT 0,
@@ -108,7 +109,7 @@ CREATE TABLE pedidos (
 -- ========================================
 -- 8. DETALLE PEDIDO
 -- ========================================
-CREATE TABLE pedido_detalle (
+CREATE TABLE IF NOT EXISTS pedido_detalle (
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 pedido_id INT NOT NULL,
                                 combo_id INT NOT NULL,
@@ -123,10 +124,10 @@ CREATE TABLE pedido_detalle (
 -- ========================================
 -- 9. QUEJAS
 -- ========================================
-CREATE TABLE quejas (
+CREATE TABLE IF NOT EXISTS quejas (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         pedido_id INT NOT NULL,
-                        repartidor_id INT NOT NULL, -- Referencia directa para reportes r�pidos
+                        repartidor_id INT NOT NULL,
                         descripcion TEXT NOT NULL,
                         fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
@@ -136,7 +137,7 @@ CREATE TABLE quejas (
 -- ========================================
 -- 10. TARJETAS CLIENTE
 -- ========================================
-CREATE TABLE tarjetas_cliente (
+CREATE TABLE IF NOT EXISTS tarjetas_cliente (
                                   id INT AUTO_INCREMENT PRIMARY KEY,
                                   cliente_id INT NOT NULL,
                                   numero_tarjeta VARCHAR(20) NOT NULL,
@@ -146,11 +147,8 @@ CREATE TABLE tarjetas_cliente (
 ) ENGINE=InnoDB;
 
 -- ========================================
--- DATOS DE PRUEBA UNIFICADOS (MOCK DATA)
+-- DATOS DE PRUEBA
 -- ========================================
--- Este script conserva la estructura actual de la base de datos.
--- No se insertan usuarios, clientes, repartidores ni tarjetas_cliente,
--- ya que esos datos se utilizan para tus pruebas y se mantienen separados.
 
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE quejas;
@@ -203,19 +201,4 @@ INSERT INTO combos (restaurante_id, numero_combo, nombre, precio) VALUES
 (12, 1, 'Smoothie Tropical', 4000), (12, 2, 'Jugo Natural Grande', 5000), (12, 3, 'Batido de Fresa', 6000),
 (12, 4, 'Limonada Imperial', 7000), (12, 5, 'Te Frio Artesanal', 8000), (12, 6, 'Pack 4 Bebidas Premium', 9000);
 
--- Admin (requiere que el usuario admin ya exista en la tabla usuarios)
---INSERT INTO admins (usuario_id, nombre) VALUES
---(3, 'Admin Cleta');
-
--- Pedidos de ejemplo (requieren cliente y repartidor existentes)
---INSERT INTO pedidos (cliente_id, restaurante_id, repartidor_id, estado, distancia_km, subtotal, costo_envio, iva, total) VALUES
---(1, 1, 2, 'entregado', 5.5, 9000, 1500, 1170, 11670),
---(1, 1, NULL, 'preparacion', 3.0, 4000, 1000, 520, 5520);
-
---INSERT INTO pedido_detalle (pedido_id, combo_id, cantidad, precio_unitario, agrandado, notas) VALUES
---(1, 1, 1, 4000, FALSE, 'Sin cebolla'),
---(1, 2, 1, 5000, TRUE, 'Extra queso'),
---(2, 1, 1, 4000, FALSE, 'Normal');
-
---INSERT INTO quejas (pedido_id, repartidor_id, descripcion) VALUES
---(1, 2, 'La orden llego fria y con retraso');
+-- Admins, pedidos y otros datos de ejemplo están comentados porque requieren datos de usuarios, clientes y repartidores existentes.

@@ -1,0 +1,10 @@
+target/
+.git/
+.idea/
+*.iml
+tomcat.8080/
+.mvn/
+mvnw
+mvnw.cmd
+Dockerfile
+.dockerignore

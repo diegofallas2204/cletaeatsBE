@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: cletaeats-backend
+    env: java
+    plan: starter
+    buildCommand: mvn -DskipTests clean package
+    startCommand: java -jar target/cletaeats-1.0-jar-with-dependencies.jar
+    autoDeploy: true
+    envVars:
+      - key: JDBC_URL
+      - key: DB_USER
+      - key: DB_PASSWORD
+      - key: DB_HOST
+      - key: DB_PORT
+      - key: DB_NAME
