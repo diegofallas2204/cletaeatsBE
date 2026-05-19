@@ -6,6 +6,9 @@ import cletaeats.models.Cliente;
 import cletaeats.models.Usuario;
 import cletaeats.repositories.ClienteRepository;
 import cletaeats.repositories.UsuarioRepository;
+import cletaeats.repositories.PedidoRepository;
+import cletaeats.config.RespuestaJSON;
+import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -21,6 +24,8 @@ public class ClienteServlet extends HttpServlet {
     private final ClienteController clienteController = new ClienteController();
     private final UsuarioRepository usuarioRepository = new UsuarioRepository();
     private final ClienteRepository clienteRepository = new ClienteRepository();
+    private final PedidoRepository pedidoRepository = new PedidoRepository();
+    private final Gson gson = new Gson();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -121,6 +126,50 @@ public class ClienteServlet extends HttpServlet {
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno: " + e.getMessage() + "\"}");
+        }
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || !pathInfo.startsWith("/pedidos/")) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Endpoint no encontrado")));
+            return;
+        }
+
+        try {
+            // Espera /pedidos/{id}/cancelar
+            String[] partes = pathInfo.split("/");
+            if (partes.length != 4 || !partes[3].equals("cancelar")) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Ruta mal formada")));
+                return;
+            }
+
+            int pedidoId = Integer.parseInt(partes[2]);
+
+            String username = resolveUsername(req);
+            if (username == null || username.isBlank()) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("No autorizado")));
+                return;
+            }
+
+            // Actualiza el estado a cancelado en la base de datos
+            boolean actualizado = pedidoRepository.actualizarEstadoPedido(pedidoId, "cancelado");
+
+            if (actualizado) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Pedido cancelado exitosamente")));
+            } else {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("No se pudo cancelar el pedido")));
+            }
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error: " + e.getMessage())));
         }
     }
 
