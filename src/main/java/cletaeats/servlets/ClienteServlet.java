@@ -159,8 +159,11 @@ public class ClienteServlet extends HttpServlet {
                 return;
             }
 
+            System.out.println("[ClienteServlet] Intentando cancelar pedidoId: " + pedidoId + " por usuario: " + username);
+
             // Actualiza el estado a cancelado en la base de datos
             boolean actualizado = pedidoRepository.actualizarEstadoPedido(pedidoId, "cancelado");
+            System.out.println("[ClienteServlet] Resultado de actualizacion: " + actualizado);
 
             if (actualizado) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Pedido cancelado exitosamente")));

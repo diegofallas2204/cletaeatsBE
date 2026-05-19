@@ -151,12 +151,19 @@ public class PedidoRepository {
     }
 
     public boolean actualizarEstadoPedido(int pedidoId, String nuevoEstado) throws SQLException {
+        System.out.println("[PedidoRepository] actualizarEstadoPedido: pedidoId=" + pedidoId + ", nuevoEstado=" + nuevoEstado);
         String sql = "UPDATE pedidos SET estado = ? WHERE id = ?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, nuevoEstado);
             stmt.setInt(2, pedidoId);
-            return stmt.executeUpdate() > 0;
+            int rows = stmt.executeUpdate();
+            System.out.println("[PedidoRepository] Filas afectadas: " + rows);
+            return rows > 0;
+        } catch (SQLException e) {
+            System.err.println("[PedidoRepository] Error SQL en actualizarEstadoPedido: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
     }
 
