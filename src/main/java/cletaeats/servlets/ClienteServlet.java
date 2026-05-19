@@ -161,8 +161,8 @@ public class ClienteServlet extends HttpServlet {
 
             System.out.println("[ClienteServlet] Intentando cancelar pedidoId: " + pedidoId + " por usuario: " + username);
 
-            // Actualiza el estado a cancelado en la base de datos
-            boolean actualizado = pedidoRepository.actualizarEstadoPedido(pedidoId, "cancelado");
+            // Actualiza el estado a suspendido en la base de datos (conforme al ENUM de MySQL)
+            boolean actualizado = pedidoRepository.actualizarEstadoPedido(pedidoId, "suspendido");
             System.out.println("[ClienteServlet] Resultado de actualizacion: " + actualizado);
 
             if (actualizado) {
