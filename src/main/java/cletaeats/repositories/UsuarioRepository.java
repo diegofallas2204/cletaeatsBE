@@ -80,24 +80,7 @@ public class UsuarioRepository {
     }
 
     public void cargarDatosCliente(Usuario usuario) throws SQLException {
-        String sql = "SELECT cedula, nombre, direccion_exacta, telefono, email FROM cliente WHERE usuario_id = ?";
-        try (Connection conn = conexion.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, usuario.getId());
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    usuario.setCedula(rs.getString("cedula"));
-                    usuario.setNombre(rs.getString("nombre"));
-                    usuario.setDireccion(rs.getString("direccion_exacta"));
-                    usuario.setTelefono(rs.getString("telefono"));
-                    usuario.setEmail(rs.getString("email"));
-                }
-            }
-        }
-    }
-
-    public void cargarDatosRepartidor(Usuario usuario) throws SQLException {
-        String sql = "SELECT cedula, nombre, direccion, telefono, correo FROM repartidor WHERE usuario_id = ?";
+        String sql = "SELECT cedula, nombre, direccion, telefono, email FROM clientes WHERE usuario_id = ?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, usuario.getId());
@@ -107,7 +90,24 @@ public class UsuarioRepository {
                     usuario.setNombre(rs.getString("nombre"));
                     usuario.setDireccion(rs.getString("direccion"));
                     usuario.setTelefono(rs.getString("telefono"));
-                    usuario.setEmail(rs.getString("correo"));
+                    usuario.setEmail(rs.getString("email"));
+                }
+            }
+        }
+    }
+
+    public void cargarDatosRepartidor(Usuario usuario) throws SQLException {
+        String sql = "SELECT cedula, nombre, direccion, telefono, email FROM repartidores WHERE usuario_id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, usuario.getId());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    usuario.setCedula(rs.getString("cedula"));
+                    usuario.setNombre(rs.getString("nombre"));
+                    usuario.setDireccion(rs.getString("direccion"));
+                    usuario.setTelefono(rs.getString("telefono"));
+                    usuario.setEmail(rs.getString("email"));
                 }
             }
         }
