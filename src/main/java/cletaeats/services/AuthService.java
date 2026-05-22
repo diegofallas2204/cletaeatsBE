@@ -143,4 +143,20 @@ public class AuthService {
             throw new Exception("El email es obligatorio para el perfil");
         }
     }
+
+    public Usuario obtenerPerfilCompleto(String username) throws Exception {
+        Usuario usuario = usuarioRepository.findByUsername(username);
+        if (usuario == null) {
+            throw new Exception("Usuario no encontrado");
+        }
+
+        // Obtener datos específicos según el rol
+        if ("cliente".equalsIgnoreCase(usuario.getRol())) {
+            usuarioRepository.cargarDatosCliente(usuario);
+        } else if ("repartidor".equalsIgnoreCase(usuario.getRol())) {
+            usuarioRepository.cargarDatosRepartidor(usuario);
+        }
+
+        return usuario;
+    }
 }

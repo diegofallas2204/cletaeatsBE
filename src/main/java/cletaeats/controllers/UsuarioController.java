@@ -60,16 +60,19 @@ public class UsuarioController {
                 return gson.toJson(RespuestaJSON.fallar("Username no proporcionado"));
             }
 
-            Usuario usuario = usuarioRepository.findByUsername(username);
-            if (usuario == null) {
-                return gson.toJson(RespuestaJSON.fallar("Usuario no encontrado"));
-            }
+            Usuario usuario = authService.obtenerPerfilCompleto(username);
 
-            // Ocultar la contraseña por seguridad
-            usuario.setPassword(null);
-            usuario.setToken(null);
+            // Mapear a DTO con solo los campos necesarios
+            Map<String, Object> perfilData = new java.util.HashMap<>();
+            perfilData.put("username", usuario.getUsername());
+            perfilData.put("nombre", usuario.getNombre());
+            perfilData.put("cedula", usuario.getCedula());
+            perfilData.put("direccion", usuario.getDireccion());
+            perfilData.put("telefono", usuario.getTelefono());
+            perfilData.put("email", usuario.getEmail());
+            perfilData.put("rol", usuario.getRol());
 
-            return gson.toJson(RespuestaJSON.exito(usuario));
+            return gson.toJson(RespuestaJSON.exito(perfilData));
         } catch (Exception e) {
             return gson.toJson(RespuestaJSON.fallar("Error al obtener perfil: " + e.getMessage()));
         }
