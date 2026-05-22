@@ -1,6 +1,7 @@
 package cletaeats.servlets;
 
 import cletaeats.controllers.UsuarioController;
+import cletaeats.repositories.UsuarioRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,6 +14,7 @@ import java.io.IOException;
 @WebServlet("/api/usuarios/*")
 public class UsuarioServlet extends HttpServlet {
     private final UsuarioController usuarioController = new UsuarioController();
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -58,5 +60,39 @@ public class UsuarioServlet extends HttpServlet {
         // muchos APIs envían el error dentro del JSON con status 200 o se extrae.
         // Aquí lo dejamos directo del controlador.
         resp.getWriter().write(jsonResponse);
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || !pathInfo.equals("/perfil")) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Endpoint no encontrado\"}");
+            return;
+        }
+
+        try {
+            String username = (String) req.getAttribute("username");
+            if (username == null || username.isBlank()) {
+                if (req.getUserPrincipal() != null) {
+                    username = req.getUserPrincipal().getName();
+                }
+            }
+
+            if (username == null || username.isBlank()) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write("{\"exito\":false, \"mensaje\":\"No autorizado: token inválido o ausente\"}");
+                return;
+            }
+
+            String jsonResponse = usuarioController.getPerfil(username);
+            resp.getWriter().write(jsonResponse);
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno: " + e.getMessage() + "\"}");
+        }
     }
 }
