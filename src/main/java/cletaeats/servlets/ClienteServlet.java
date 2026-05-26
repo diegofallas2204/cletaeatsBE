@@ -176,6 +176,45 @@ public class ClienteServlet extends HttpServlet {
         }
     }
 
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || !pathInfo.startsWith("/tarjetas/")) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Endpoint no encontrado\"}");
+            return;
+        }
+
+        try {
+            String username = resolveUsername(req);
+            if (username == null || username.isBlank()) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write("{\"exito\":false, \"mensaje\":\"No autorizado: token inválido o ausente\"}");
+                return;
+            }
+
+            Usuario usuario = usuarioRepository.findByUsername(username);
+            Cliente cliente = clienteRepository.buscarPorUsuarioId(usuario.getId());
+
+            String[] partes = pathInfo.split("/");
+            if (partes.length < 3) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Peticion invalida\"}");
+                return;
+            }
+            int tarjetaId = Integer.parseInt(partes[2]);
+
+            String jsonResponse = clienteController.eliminarTarjeta(cliente.getId(), tarjetaId);
+            resp.getWriter().write(jsonResponse);
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno: " + e.getMessage() + "\"}");
+        }
+    }
+
     private String resolveUsername(HttpServletRequest req) {
         String username = (String) req.getAttribute("username");
         if (username == null || username.isBlank()) {

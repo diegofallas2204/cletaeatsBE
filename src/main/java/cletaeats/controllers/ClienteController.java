@@ -28,4 +28,17 @@ public class ClienteController {
             return gson.toJson(RespuestaJSON.fallar(e.getMessage()));
         }
     }
+
+    public String eliminarTarjeta(int clienteId, int tarjetaId) {
+        try {
+            boolean exito = metodoPagoRepository.eliminarTarjeta(clienteId, tarjetaId);
+            if (exito) {
+                return gson.toJson(RespuestaJSON.exito("Tarjeta eliminada correctamente"));
+            } else {
+                return gson.toJson(RespuestaJSON.fallar("No se encontró la tarjeta"));
+            }
+        } catch (Exception e) {
+            return gson.toJson(RespuestaJSON.fallar(e.getMessage()));
+        }
+    }
 }

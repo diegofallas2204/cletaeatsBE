@@ -98,13 +98,19 @@ public class RepartidorServlet extends HttpServlet {
                 return;
             }
 
-            boolean actualizado = pedidoRepository.actualizarEstadoPedido(pedidoId, nuevoEstado);
+            String username = (String) req.getAttribute("username");
+            Usuario usuario = usuarioRepository.findByUsername(username);
+            Repartidor repartidor = repartidorRepository.buscarPorUsuarioId(usuario.getId());
+
+            boolean actualizado;
+            if (nuevoEstado.equals("aceptado") || nuevoEstado.equals("camino")) {
+                actualizado = pedidoRepository.actualizarEstadoYRepartidor(pedidoId, nuevoEstado, repartidor.getId());
+            } else {
+                actualizado = pedidoRepository.actualizarEstadoPedido(pedidoId, nuevoEstado);
+            }
             
             if (actualizado && nuevoEstado.equals("entregado")) {
                 // Si ya lo entregó, vuelve a estar disponible
-                String username = (String) req.getAttribute("username");
-                Usuario usuario = usuarioRepository.findByUsername(username);
-                Repartidor repartidor = repartidorRepository.buscarPorUsuarioId(usuario.getId());
                 repartidorRepository.actualizarEstado(repartidor.getId(), "disponible");
             }
 

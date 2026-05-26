@@ -137,7 +137,7 @@ public class PedidoRepository {
 
     public List<Pedido> listarPorRepartidor(int repartidorId) throws SQLException {
         List<Pedido> pedidos = new ArrayList<>();
-        String sql = "SELECT * FROM pedidos WHERE repartidor_id = ? AND estado != 'entregado' AND estado != 'suspendido' ORDER BY fecha_pedido DESC";
+        String sql = "SELECT * FROM pedidos WHERE (repartidor_id = ? AND estado != 'entregado' AND estado != 'suspendido') OR (estado IN ('pendiente', 'preparando') AND (repartidor_id IS NULL OR repartidor_id = 0)) ORDER BY fecha_pedido DESC";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, repartidorId);
@@ -164,6 +164,17 @@ public class PedidoRepository {
             System.err.println("[PedidoRepository] Error SQL en actualizarEstadoPedido: " + e.getMessage());
             e.printStackTrace();
             throw e;
+        }
+    }
+
+    public boolean actualizarEstadoYRepartidor(int pedidoId, String nuevoEstado, int repartidorId) throws SQLException {
+        String sql = "UPDATE pedidos SET estado = ?, repartidor_id = ? WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, nuevoEstado);
+            stmt.setInt(2, repartidorId);
+            stmt.setInt(3, pedidoId);
+            return stmt.executeUpdate() > 0;
         }
     }
 
