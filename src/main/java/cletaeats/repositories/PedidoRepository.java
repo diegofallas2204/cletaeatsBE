@@ -150,6 +150,44 @@ public class PedidoRepository {
         return pedidos;
     }
 
+    public List<Pedido> listarDisponibles() throws SQLException {
+        List<Pedido> pedidos = new ArrayList<>();
+        String sql = "SELECT * FROM pedidos WHERE repartidor_id IS NULL AND estado IN ('pendiente', 'preparando') ORDER BY fecha_pedido DESC";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    pedidos.add(mapearPedido(rs));
+                }
+            }
+        }
+        return pedidos;
+    }
+
+    public boolean repartidorTienePedidoActivo(int repartidorId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM pedidos WHERE repartidor_id = ? AND estado IN ('aceptado', 'preparando', 'camino')";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, repartidorId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean asignarPedidoAtomico(int pedidoId, int repartidorId) throws SQLException {
+        String sql = "UPDATE pedidos SET repartidor_id = ?, estado = 'aceptado' WHERE id = ? AND repartidor_id IS NULL";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, repartidorId);
+            stmt.setInt(2, pedidoId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public boolean actualizarEstadoPedido(int pedidoId, String nuevoEstado) throws SQLException {
         System.out.println("[PedidoRepository] actualizarEstadoPedido: pedidoId=" + pedidoId + ", nuevoEstado=" + nuevoEstado);
         String sql = "UPDATE pedidos SET estado = ? WHERE id = ?";

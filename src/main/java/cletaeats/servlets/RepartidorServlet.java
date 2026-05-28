@@ -32,7 +32,7 @@ public class RepartidorServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
 
         String pathInfo = req.getPathInfo();
-        if (pathInfo == null || !pathInfo.equals("/pedidos")) {
+        if (pathInfo == null || (!pathInfo.equals("/pedidos") && !pathInfo.equals("/pedidos/disponibles"))) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Endpoint no encontrado")));
             return;
@@ -47,6 +47,12 @@ public class RepartidorServlet extends HttpServlet {
             if (repartidor == null) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("El usuario no tiene perfil de repartidor")));
+                return;
+            }
+
+            if (pathInfo.equals("/pedidos/disponibles")) {
+                List<Pedido> disponibles = pedidoRepository.listarDisponibles();
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(disponibles)));
                 return;
             }
 
@@ -73,15 +79,43 @@ public class RepartidorServlet extends HttpServlet {
         }
 
         try {
-            // Ejemplo de ruta: /pedidos/1/estado
+            // Ejemplo de ruta: /pedidos/1/estado o /pedidos/1/asignar
             String[] partes = pathInfo.split("/");
-            if (partes.length != 4 || !partes[3].equals("estado")) {
+            if (partes.length != 4 || (!partes[3].equals("estado") && !partes[3].equals("asignar"))) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Ruta mal formada")));
                 return;
             }
 
             int pedidoId = Integer.parseInt(partes[2]);
+            String accion = partes[3];
+
+            String username = (String) req.getAttribute("username");
+            Usuario usuario = usuarioRepository.findByUsername(username);
+            Repartidor repartidor = repartidorRepository.buscarPorUsuarioId(usuario.getId());
+
+            if (repartidor == null) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("El usuario no tiene perfil de repartidor")));
+                return;
+            }
+
+            if (accion.equals("asignar")) {
+                if (pedidoRepository.repartidorTienePedidoActivo(repartidor.getId())) {
+                    resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                    resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("El repartidor ya tiene un pedido en curso")));
+                    return;
+                }
+                boolean asignado = pedidoRepository.asignarPedidoAtomico(pedidoId, repartidor.getId());
+                if (asignado) {
+                    resp.setStatus(HttpServletResponse.SC_OK);
+                    resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Pedido asignado exitosamente")));
+                } else {
+                    resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                    resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("El pedido no existe o ya fue tomado por otro repartidor")));
+                }
+                return;
+            }
 
             // Leer JSON para obtener el nuevo estado
             StringBuilder sb = new StringBuilder();
@@ -94,13 +128,10 @@ public class RepartidorServlet extends HttpServlet {
             String nuevoEstado = body.get("estado"); // 'camino', 'entregado'
 
             if (nuevoEstado == null || nuevoEstado.isEmpty()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Falta el campo estado")));
                 return;
             }
-
-            String username = (String) req.getAttribute("username");
-            Usuario usuario = usuarioRepository.findByUsername(username);
-            Repartidor repartidor = repartidorRepository.buscarPorUsuarioId(usuario.getId());
 
             boolean actualizado;
             if (nuevoEstado.equals("aceptado") || nuevoEstado.equals("camino")) {
