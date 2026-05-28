@@ -152,7 +152,7 @@ public class PedidoRepository {
 
     public List<Pedido> listarDisponibles() throws SQLException {
         List<Pedido> pedidos = new ArrayList<>();
-        String sql = "SELECT * FROM pedidos WHERE repartidor_id IS NULL AND estado IN ('pendiente', 'preparando') ORDER BY fecha_pedido DESC";
+        String sql = "SELECT * FROM pedidos WHERE repartidor_id IS NULL AND estado IN ('pendiente', 'preparacion') ORDER BY fecha_pedido DESC";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             try (ResultSet rs = stmt.executeQuery()) {
