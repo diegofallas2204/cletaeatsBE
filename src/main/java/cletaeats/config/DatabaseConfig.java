@@ -4,11 +4,11 @@ package cletaeats.config;
  * Configuración centralizada de la base de datos MySQL.
  */
 public class DatabaseConfig {
-    private static final String DEFAULT_HOST = "yamanote.proxy.rlwy.net";
-    private static final String DEFAULT_PORT = "51966";
+    private static final String DEFAULT_HOST = "yamabiko.proxy.rlwy.net";
+    private static final String DEFAULT_PORT = "14589";
     private static final String DEFAULT_NAME = "railway";
     private static final String DEFAULT_USER = "root";
-    private static final String DEFAULT_PASSWORD = "TiPqRCgpyTaODsjqnfdvmoteVdcumAlh";
+    private static final String DEFAULT_PASSWORD = "EIEnYaxDAEvxiTYtaDNZynMpvPeXnzLx";
 
     public static final String URL = System.getenv().getOrDefault(
             "JDBC_URL",
