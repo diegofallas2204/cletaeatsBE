@@ -33,13 +33,18 @@ public class Conexion {
      * @throws SQLException Si falla la conexión.
      */
     public Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(
-                    DatabaseConfig.URL,
-                    DatabaseConfig.USER,
-                    DatabaseConfig.PASSWORD
-            );
+        try {
+            if (connection != null && !connection.isClosed() && connection.isValid(2)) {
+                return connection;
+            }
+        } catch (SQLException e) {
+            connection = null;
         }
+        connection = DriverManager.getConnection(
+                DatabaseConfig.URL,
+                DatabaseConfig.USER,
+                DatabaseConfig.PASSWORD
+        );
         return connection;
     }
 

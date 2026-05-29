@@ -17,6 +17,10 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) throws Exception {
         System.out.println("Iniciando Tomcat Embebido...");
+        cletaeats.config.DatabaseConfig.printConfig();
+        if (!cletaeats.config.DatabaseConfig.testConnection()) {
+            System.err.println("ADVERTENCIA: No se pudo conectar a MySQL. Revisa variables MYSQL* o DB_* en Railway/Render.");
+        }
 
         Tomcat tomcat = new Tomcat();
 
