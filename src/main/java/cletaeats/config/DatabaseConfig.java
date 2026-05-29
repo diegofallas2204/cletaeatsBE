@@ -52,7 +52,7 @@ public final class DatabaseConfig {
                 toJdbcUrl(System.getenv("MYSQL_URL")),
                 toJdbcUrl(System.getenv("DATABASE_URL"))
         );
-        if (jdbcUrl != null) {
+        if (jdbcUrl != null && !jdbcUrl.isBlank()) {
             return jdbcUrl;
         }
         return String.format(
