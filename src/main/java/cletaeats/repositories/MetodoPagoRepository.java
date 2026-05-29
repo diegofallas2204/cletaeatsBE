@@ -64,4 +64,14 @@ public class MetodoPagoRepository {
             }
         }
     }
+
+    public boolean eliminarTarjeta(int clienteId, int tarjetaId) throws SQLException {
+        String sql = "DELETE FROM tarjetas_cliente WHERE id = ? AND cliente_id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, tarjetaId);
+            stmt.setInt(2, clienteId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
 }

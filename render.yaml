@@ -7,9 +7,16 @@ services:
     startCommand: java -jar target/cletaeats-1.0-jar-with-dependencies.jar
     autoDeploy: true
     envVars:
+      # Railway (recomendado): vincular servicio MySQL — inyecta MYSQLHOST, MYSQLPORT, etc.
+      - key: MYSQLHOST
+      - key: MYSQLPORT
+      - key: MYSQLDATABASE
+      - key: MYSQLUSER
+      - key: MYSQLPASSWORD
+      # Render / compatibilidad legacy:
       - key: JDBC_URL
-      - key: DB_USER
-      - key: DB_PASSWORD
       - key: DB_HOST
       - key: DB_PORT
       - key: DB_NAME
+      - key: DB_USER
+      - key: DB_PASSWORD

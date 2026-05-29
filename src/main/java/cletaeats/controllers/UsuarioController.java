@@ -4,10 +4,12 @@ import com.google.gson.Gson;
 import cletaeats.config.RespuestaJSON;
 import cletaeats.models.Usuario;
 import cletaeats.services.AuthService;
+import cletaeats.repositories.UsuarioRepository;
 import java.util.Map;
 
 public class UsuarioController {
     private final AuthService authService = new AuthService();
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
     private final Gson gson = new Gson();
 
     /**
@@ -50,5 +52,29 @@ public class UsuarioController {
         // En JWT, el logout es principalmente del lado del cliente (borrar el token).
         // Aquí devolvemos éxito para confirmar la petición.
         return gson.toJson(RespuestaJSON.exito("Sesión cerrada correctamente"));
+    }
+
+    public String getPerfil(String username) {
+        try {
+            if (username == null || username.isBlank()) {
+                return gson.toJson(RespuestaJSON.fallar("Username no proporcionado"));
+            }
+
+            Usuario usuario = authService.obtenerPerfilCompleto(username);
+
+            // Mapear a DTO con solo los campos necesarios
+            Map<String, Object> perfilData = new java.util.HashMap<>();
+            perfilData.put("username", usuario.getUsername());
+            perfilData.put("nombre", usuario.getNombre());
+            perfilData.put("cedula", usuario.getCedula());
+            perfilData.put("direccion", usuario.getDireccion());
+            perfilData.put("telefono", usuario.getTelefono());
+            perfilData.put("email", usuario.getEmail());
+            perfilData.put("rol", usuario.getRol());
+
+            return gson.toJson(RespuestaJSON.exito(perfilData));
+        } catch (Exception e) {
+            return gson.toJson(RespuestaJSON.fallar("Error al obtener perfil: " + e.getMessage()));
+        }
     }
 }

@@ -33,9 +33,18 @@ public class LoggingFilter implements Filter {
         System.out.printf("[%s] REQUEST: %s %s desde IP: %s%n", timestamp, method, uri, ip);
 
         long startTime = System.currentTimeMillis();
-        chain.doFilter(request, response);
+        try {
+            chain.doFilter(request, response);
+        } catch (Throwable t) {
+            long duration = System.currentTimeMillis() - startTime;
+            System.err.printf("[%s] ERROR processing request %s %s after %dms: %s%n", timestamp, method, uri, duration, t.getMessage());
+            t.printStackTrace();
+            // rethrow to let the servlet container handle the 500 response
+            if (t instanceof ServletException) throw (ServletException) t;
+            if (t instanceof IOException) throw (IOException) t;
+            throw new ServletException(t);
+        }
         long duration = System.currentTimeMillis() - startTime;
-
         System.out.printf("[%s] RESPONSE: %s %s completado en %dms%n", timestamp, method, uri, duration);
     }
 
