@@ -4,11 +4,14 @@ import cletaeats.controllers.PedidoController;
 import cletaeats.controllers.ClienteController;
 import cletaeats.models.Cliente;
 import cletaeats.models.Usuario;
+import cletaeats.models.Valoracion;
 import cletaeats.repositories.ClienteRepository;
 import cletaeats.repositories.UsuarioRepository;
 import cletaeats.repositories.PedidoRepository;
+import cletaeats.repositories.ValoracionRepository;
 import cletaeats.config.RespuestaJSON;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -25,6 +28,7 @@ public class ClienteServlet extends HttpServlet {
     private final UsuarioRepository usuarioRepository = new UsuarioRepository();
     private final ClienteRepository clienteRepository = new ClienteRepository();
     private final PedidoRepository pedidoRepository = new PedidoRepository();
+    private final ValoracionRepository valoracionRepository = new ValoracionRepository();
     private final Gson gson = new Gson();
 
     @Override
@@ -33,7 +37,8 @@ public class ClienteServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
 
         String pathInfo = req.getPathInfo();
-        if (pathInfo == null || (!pathInfo.equals("/pedidos") && !pathInfo.equals("/tarjetas"))) {
+        boolean esValoracion = pathInfo != null && pathInfo.matches("/pedidos/\\d+/valorar");
+        if (pathInfo == null || (!pathInfo.equals("/pedidos") && !pathInfo.equals("/tarjetas") && !esValoracion)) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Endpoint no encontrado\"}");
             return;
@@ -73,6 +78,29 @@ public class ClienteServlet extends HttpServlet {
                 jsonResponse = pedidoController.crearPedido(sb.toString(), username);
             } else if (pathInfo.equals("/tarjetas")) {
                 jsonResponse = clienteController.guardarTarjeta(cliente.getId(), sb.toString());
+            } else if (esValoracion) {
+                // POST /api/cliente/pedidos/{id}/valorar
+                String[] partes = pathInfo.split("/");
+                int pedidoId = Integer.parseInt(partes[2]);
+                if (valoracionRepository.existeParaPedido(pedidoId)) {
+                    jsonResponse = gson.toJson(RespuestaJSON.fallar("Este pedido ya fue valorado"));
+                } else {
+                    JsonObject body = gson.fromJson(sb.toString(), JsonObject.class);
+                    int rating = body.get("rating").getAsInt();
+                    String comentario = body.has("comentario") && !body.get("comentario").isJsonNull()
+                            ? body.get("comentario").getAsString() : null;
+                    if (rating < 1 || rating > 5) {
+                        jsonResponse = gson.toJson(RespuestaJSON.fallar("El rating debe ser entre 1 y 5"));
+                    } else {
+                        Valoracion v = new Valoracion();
+                        v.setPedidoId(pedidoId);
+                        v.setClienteId(cliente.getId());
+                        v.setRating(rating);
+                        v.setComentario(comentario);
+                        valoracionRepository.guardar(v);
+                        jsonResponse = gson.toJson(RespuestaJSON.exito("Valoración guardada"));
+                    }
+                }
             }
             resp.getWriter().write(jsonResponse);
         } catch (Exception e) {
