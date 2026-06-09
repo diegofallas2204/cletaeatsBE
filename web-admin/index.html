@@ -6,7 +6,23 @@
 <title>CletaEats Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>if (!localStorage.getItem('adminToken')) window.location.href = 'login.html';</script>
+<script>
+  (function() {
+    const token = localStorage.getItem('adminToken');
+    if (!token) { window.location.href = 'login.html'; return; }
+    // Verificar que el token no esté expirado decodificando el payload
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+      if (payload.exp && Date.now() / 1000 >= payload.exp) {
+        localStorage.removeItem('adminToken');
+        window.location.href = 'login.html';
+      }
+    } catch(e) {
+      localStorage.removeItem('adminToken');
+      window.location.href = 'login.html';
+    }
+  })();
+</script>
 <style>
   :root {
     --brown-dark: #3d1a0e; --brown-mid: #6b2d1a; --brown-light: #c47a4a;
@@ -331,7 +347,7 @@ function toggleSidebar() {
 // ── FETCH ────────────────────────────────────────
 async function fetchData(endpoint) {
   const r = await fetch(`${API_BASE}${endpoint}`, { headers:{'Authorization':`Bearer ${TOKEN}`} });
-  if (r.status === 401) logout();
+  if (r.status === 401 || r.status === 403) { logout(); return []; }
   const j = await r.json();
   return j.success ? (j.data || []) : [];
 }
