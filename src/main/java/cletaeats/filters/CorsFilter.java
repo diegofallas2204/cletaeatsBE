@@ -48,6 +48,7 @@ public class CorsFilter implements Filter {
             return;
         }
 
+        res.setHeader("Cache-Control", "no-store");
         chain.doFilter(request, response);
     }
 
