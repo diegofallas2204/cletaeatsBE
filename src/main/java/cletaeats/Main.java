@@ -51,6 +51,9 @@ public class Main {
         Tomcat.addServlet(ctx, "RestauranteServlet", new cletaeats.servlets.RestauranteServlet());
         ctx.addServletMappingDecoded("/api/restaurantes/*", "RestauranteServlet");
 
+        Tomcat.addServlet(ctx, "ComboServlet", new cletaeats.servlets.ComboServlet());
+        ctx.addServletMappingDecoded("/api/combos/*", "ComboServlet");
+
         // Servir archivos estáticos del admin
         String webAdminPath = resolveWebAdminPath();
         Context adminCtx = tomcat.addContext("/admin", webAdminPath);
