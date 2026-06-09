@@ -166,8 +166,10 @@
         <div class="summary-card" onclick="navTo('repartidores')" title="Ver repartidores"><h3>🛵 Repartidores</h3><div class="val" id="dashRepCount">…</div></div>
         <div class="summary-card" onclick="navToPedidosFiltrado('pendiente')" title="Ver pendientes"><h3>⏳ Pendientes</h3><div class="val" id="dashPendientes">…</div></div>
       </div>
-      <div class="chart-card"><h3>📊 Ventas por Restaurante</h3><div class="chart-wrap"><canvas id="ventasChart"></canvas></div></div>
-      <div class="chart-card"><h3>📋 Pedidos por Estado</h3><div class="chart-wrap"><canvas id="estadosChart"></canvas></div></div>
+      <div id="chartsContainer" style="display:none;flex-direction:column;gap:16px;">
+        <div class="chart-card"><h3>📊 Ventas por Restaurante</h3><div class="chart-wrap"><canvas id="ventasChart"></canvas></div></div>
+        <div class="chart-card"><h3>📋 Pedidos por Estado</h3><div class="chart-wrap"><canvas id="estadosChart"></canvas></div></div>
+      </div>
     </div>
 
     <!-- PEDIDOS -->
@@ -352,6 +354,8 @@ async function renderAll() {
 function destroyCharts() {
   if (ventasChart) { ventasChart.destroy(); ventasChart = null; }
   if (estadosChart) { estadosChart.destroy(); estadosChart = null; }
+  const c = document.getElementById('chartsContainer');
+  if (c) c.style.display = 'none';
 }
 
 function renderDashboard() {
@@ -364,8 +368,10 @@ function renderDashboard() {
   document.getElementById('dashRepCount').textContent  = d.totalRepartidores || 0;
   document.getElementById('dashPendientes').textContent = data.pedidos.filter(p => p.estado==='pendiente').length;
 
-  const vpr    = d.ventasPorRestaurante || [];
+  const vpr = d.ventasPorRestaurante || [];
   destroyCharts();
+  const chartsContainer = document.getElementById('chartsContainer');
+  if (chartsContainer) chartsContainer.style.display = 'flex';
   ventasChart = new Chart(document.getElementById('ventasChart'), {
     type: 'bar',
     data: { labels: vpr.map(r => r.nombreRestaurante || r.nombre || ''),
