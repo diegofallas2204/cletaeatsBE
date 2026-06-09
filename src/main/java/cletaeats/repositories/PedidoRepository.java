@@ -82,7 +82,8 @@ public class PedidoRepository {
             throw e;
         } finally {
             if (conn != null) {
-                conn.setAutoCommit(true); 
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+                try { conn.close(); } catch (SQLException ignored) {}
             }
         }
     }
@@ -190,6 +191,16 @@ public class PedidoRepository {
         }
     }
 
+    public boolean cancelarPedidoCliente(int pedidoId, int clienteId) throws SQLException {
+        String sql = "UPDATE pedidos SET estado = 'suspendido' WHERE id = ? AND cliente_id = ? AND estado IN ('pendiente', 'preparando')";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, pedidoId);
+            stmt.setInt(2, clienteId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public boolean actualizarEstadoPedido(int pedidoId, String nuevoEstado) throws SQLException {
         System.out.println("[PedidoRepository] actualizarEstadoPedido: pedidoId=" + pedidoId + ", nuevoEstado=" + nuevoEstado);
         String sql = "UPDATE pedidos SET estado = ? WHERE id = ?";
@@ -227,6 +238,7 @@ public class PedidoRepository {
                      "FROM pedidos p " +
                      "LEFT JOIN restaurantes r ON p.restaurante_id = r.id " +
                      "LEFT JOIN clientes c ON p.cliente_id = c.id " +
+                     "WHERE p.activo = true " +
                      "ORDER BY p.fecha_pedido DESC";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -251,6 +263,15 @@ public class PedidoRepository {
         return lista;
     }
 
+    public boolean desactivarPedido(int id) throws SQLException {
+        String sql = "UPDATE pedidos SET activo = false WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public void eliminar(int id) throws SQLException {
         String sqlDet = "DELETE FROM pedido_detalle WHERE pedido_id = ?";
         String sqlPed = "DELETE FROM pedidos WHERE id = ?";
@@ -268,10 +289,13 @@ public class PedidoRepository {
             }
             conn.commit();
         } catch (SQLException e) {
-            if (conn != null) conn.rollback();
+            if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
             throw e;
         } finally {
-            if (conn != null) conn.setAutoCommit(true);
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+                try { conn.close(); } catch (SQLException ignored) {}
+            }
         }
     }
 

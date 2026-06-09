@@ -205,7 +205,7 @@
       </div>
       <div class="section-search"><span>🔍</span><input type="text" id="searchClientes" placeholder="Buscar por nombre, email, cédula o ID…" oninput="renderClientes(this.value)"/></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Cédula</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>#</th><th>Nombre</th><th>Usuario</th><th>Email</th><th>Teléfono</th><th>Cédula</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="tbClientes"></tbody>
       </table></div>
     </div>
@@ -252,7 +252,7 @@
       </div>
       <div class="section-search"><span>🔍</span><input type="text" id="searchRepartidores" placeholder="Buscar por nombre, cédula o ID…" oninput="renderRepartidores(this.value)"/></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>Cédula</th><th>Estado</th><th>Km</th><th>Amon.</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>#</th><th>Nombre</th><th>Usuario</th><th>Email</th><th>Cédula</th><th>Estado</th><th>Km</th><th>Amon.</th><th>Acciones</th></tr></thead>
         <tbody id="tbRepartidores"></tbody>
       </table></div>
     </div>
@@ -418,9 +418,11 @@ function renderPedidos(q='') {
 function renderClientes(q='') {
   const tb = document.getElementById('tbClientes');
   const list = data.clientes.filter(c => !q || JSON.stringify(c).toLowerCase().includes(q.toLowerCase()));
-  if (!list.length) { tb.innerHTML='<tr class="empty-row"><td colspan="7">Sin clientes</td></tr>'; return; }
+  if (!list.length) { tb.innerHTML='<tr class="empty-row"><td colspan="8">Sin clientes</td></tr>'; return; }
   tb.innerHTML = list.map(c=>`<tr>
-    <td>${c.id}</td><td>${c.nombre}</td><td>${c.email||'—'}</td>
+    <td>${c.id}</td><td>${c.nombre}</td>
+    <td><span style="font-family:monospace;font-size:0.85rem;background:var(--cream-dark);padding:2px 6px;border-radius:6px;">${c.username||'—'}</span></td>
+    <td>${c.email||'—'}</td>
     <td>${c.telefono||'—'}</td><td>${c.cedula||'—'}</td>
     <td>${estadoBadge(c.estado)}</td>
     <td><div class="actions-cell">
@@ -446,9 +448,11 @@ function renderRestaurantes(q='') {
 function renderRepartidores(q='') {
   const tb = document.getElementById('tbRepartidores');
   const list = data.repartidores.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q.toLowerCase()));
-  if (!list.length) { tb.innerHTML='<tr class="empty-row"><td colspan="8">Sin repartidores</td></tr>'; return; }
+  if (!list.length) { tb.innerHTML='<tr class="empty-row"><td colspan="9">Sin repartidores</td></tr>'; return; }
   tb.innerHTML = list.map(r=>`<tr>
-    <td>${r.id}</td><td>${r.nombre}</td><td>${r.email||'—'}</td>
+    <td>${r.id}</td><td>${r.nombre}</td>
+    <td><span style="font-family:monospace;font-size:0.85rem;background:var(--cream-dark);padding:2px 6px;border-radius:6px;">${r.username||'—'}</span></td>
+    <td>${r.email||'—'}</td>
     <td>${r.cedula||'—'}</td><td>${estadoBadge(r.estado)}</td>
     <td>${r.kmRecorridos||0}</td><td>${r.amonestaciones||0}</td>
     <td><div class="actions-cell">
@@ -502,9 +506,9 @@ async function deletePedido(id) {
 function exportCSV(section) {
   const maps = {
     pedidos:      { list:data.pedidos,      cols:['id','clienteNombre','restauranteNombre','subtotal','costoEnvio','iva','total','estado','fechaPedido'], heads:['ID','Cliente','Restaurante','Subtotal','Costo Envío','IVA','Total','Estado','Fecha'] },
-    clientes:     { list:data.clientes,     cols:['id','nombre','email','telefono','cedula','direccion','estado'],                                       heads:['ID','Nombre','Email','Teléfono','Cédula','Dirección','Estado'] },
+    clientes:     { list:data.clientes,     cols:['id','nombre','username','email','telefono','cedula','direccion','estado'],                                       heads:['ID','Nombre','Usuario','Email','Teléfono','Cédula','Dirección','Estado'] },
     restaurantes: { list:data.restaurantes, cols:['id','nombre','tipoComida','cedulaJuridica','direccion'],                                              heads:['ID','Nombre','Tipo','Cédula Jurídica','Dirección'] },
-    repartidores: { list:data.repartidores, cols:['id','nombre','email','cedula','estado','kmRecorridos','amonestaciones'],                              heads:['ID','Nombre','Email','Cédula','Estado','Km','Amon.'] },
+    repartidores: { list:data.repartidores, cols:['id','nombre','username','email','cedula','estado','kmRecorridos','amonestaciones'],                              heads:['ID','Nombre','Usuario','Email','Cédula','Estado','Km','Amon.'] },
     productos:    { list:data.productos,    cols:['id','nombre','restauranteId','numeroCombo','precio'],                                                 heads:['ID','Nombre','Restaurante ID','Nº Combo','Precio'] },
   };
   const {list, cols, heads} = maps[section];

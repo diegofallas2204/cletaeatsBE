@@ -64,14 +64,25 @@ public class ClienteRepository {
         return false;
     }
 
+    public int contarActivos() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM clientes c JOIN usuarios u ON c.usuario_id = u.id WHERE u.activo = true";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
     public List<Cliente> listarTodos() throws SQLException {
         List<Cliente> lista = new ArrayList<>();
-        String sql = "SELECT c.* FROM clientes c JOIN usuarios u ON c.usuario_id = u.id WHERE u.activo = true";
+        String sql = "SELECT c.*, u.username FROM clientes c JOIN usuarios u ON c.usuario_id = u.id WHERE u.activo = true";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                lista.add(mapearResultSetACliente(rs));
+                Cliente c = mapearResultSetACliente(rs);
+                c.setUsername(rs.getString("username"));
+                lista.add(c);
             }
         }
         return lista;
@@ -79,12 +90,14 @@ public class ClienteRepository {
 
     public List<Cliente> listarInactivos() throws SQLException {
         List<Cliente> lista = new ArrayList<>();
-        String sql = "SELECT c.* FROM clientes c JOIN usuarios u ON c.usuario_id = u.id WHERE u.activo = false";
+        String sql = "SELECT c.*, u.username FROM clientes c JOIN usuarios u ON c.usuario_id = u.id WHERE u.activo = false";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                lista.add(mapearResultSetACliente(rs));
+                Cliente c = mapearResultSetACliente(rs);
+                c.setUsername(rs.getString("username"));
+                lista.add(c);
             }
         }
         return lista;

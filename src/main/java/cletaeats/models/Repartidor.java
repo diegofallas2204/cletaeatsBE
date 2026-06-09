@@ -12,6 +12,7 @@ public class Repartidor {
     private String estado; // 'disponible', 'ocupado'
     private float kmRecorridos;
     private int amonestaciones;
+    private String username;
 
     public Repartidor() {}
 
@@ -38,4 +39,6 @@ public class Repartidor {
     public void setKmRecorridos(float kmRecorridos) { this.kmRecorridos = kmRecorridos; }
     public int getAmonestaciones() { return amonestaciones; }
     public void setAmonestaciones(int amonestaciones) { this.amonestaciones = amonestaciones; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 }

@@ -65,14 +65,25 @@ public class RepartidorRepository {
         }
     }
 
+    public int contarActivos() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM repartidores r JOIN usuarios u ON r.usuario_id = u.id WHERE u.activo = true";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
     public List<Repartidor> listarTodos() throws SQLException {
         List<Repartidor> lista = new ArrayList<>();
-        String sql = "SELECT r.* FROM repartidores r JOIN usuarios u ON r.usuario_id = u.id WHERE u.activo = true";
+        String sql = "SELECT r.*, u.username FROM repartidores r JOIN usuarios u ON r.usuario_id = u.id WHERE u.activo = true";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                lista.add(mapearResultSetARepartidor(rs));
+                Repartidor r = mapearResultSetARepartidor(rs);
+                r.setUsername(rs.getString("username"));
+                lista.add(r);
             }
         }
         return lista;
@@ -80,12 +91,14 @@ public class RepartidorRepository {
 
     public List<Repartidor> listarInactivos() throws SQLException {
         List<Repartidor> lista = new ArrayList<>();
-        String sql = "SELECT r.* FROM repartidores r JOIN usuarios u ON r.usuario_id = u.id WHERE u.activo = false";
+        String sql = "SELECT r.*, u.username FROM repartidores r JOIN usuarios u ON r.usuario_id = u.id WHERE u.activo = false";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                lista.add(mapearResultSetARepartidor(rs));
+                Repartidor r = mapearResultSetARepartidor(rs);
+                r.setUsername(rs.getString("username"));
+                lista.add(r);
             }
         }
         return lista;

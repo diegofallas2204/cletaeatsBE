@@ -1,25 +1,29 @@
 package cletaeats.config;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Conexion {
     private static Conexion instancia;
-    private Connection connection;
+    private final HikariDataSource dataSource;
 
     private Conexion() {
-        try {
-            // Carga manual del driver para compatibilidad
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error: Driver MySQL no encontrado: " + e.getMessage());
-        }
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(DatabaseConfig.URL);
+        config.setUsername(DatabaseConfig.USER);
+        config.setPassword(DatabaseConfig.PASSWORD);
+        config.setMaximumPoolSize(10);
+        config.setMinimumIdle(2);
+        config.setConnectionTimeout(30_000);
+        config.setIdleTimeout(600_000);
+        config.setMaxLifetime(1_800_000);
+        config.setConnectionTestQuery("SELECT 1");
+        dataSource = new HikariDataSource(config);
     }
 
-    /**
-     * Retorna la instancia única de la clase Conexion.
-     */
     public static synchronized Conexion getInstancia() {
         if (instancia == null) {
             instancia = new Conexion();
@@ -27,37 +31,13 @@ public class Conexion {
         return instancia;
     }
 
-    /**
-     * Obtiene una conexión activa a la base de datos.
-     * @return Connection objeto de conexión JDBC.
-     * @throws SQLException Si falla la conexión.
-     */
     public Connection getConnection() throws SQLException {
-        try {
-            if (connection != null && !connection.isClosed() && connection.isValid(2)) {
-                return connection;
-            }
-        } catch (SQLException e) {
-            connection = null;
-        }
-        connection = DriverManager.getConnection(
-                DatabaseConfig.URL,
-                DatabaseConfig.USER,
-                DatabaseConfig.PASSWORD
-        );
-        return connection;
+        return dataSource.getConnection();
     }
 
-    /**
-     * Cierra la conexión actual si está abierta.
-     */
     public void cerrarConexion() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al cerrar la conexión: " + e.getMessage());
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
         }
     }
 }

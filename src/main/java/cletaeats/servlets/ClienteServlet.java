@@ -105,7 +105,8 @@ public class ClienteServlet extends HttpServlet {
             resp.getWriter().write(jsonResponse);
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno: " + e.getMessage() + "\"}");
+            System.err.println("CletaEats ClienteServlet error: " + e.getMessage());
+            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno del servidor.\"}");
         }
     }
 
@@ -153,7 +154,8 @@ public class ClienteServlet extends HttpServlet {
 
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno: " + e.getMessage() + "\"}");
+            System.err.println("CletaEats ClienteServlet error: " + e.getMessage());
+            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno del servidor.\"}");
         }
     }
 
@@ -187,20 +189,32 @@ public class ClienteServlet extends HttpServlet {
                 return;
             }
 
-            System.out.println("[ClienteServlet] Intentando cancelar pedidoId: " + pedidoId + " por usuario: " + username);
+            Usuario usuario = usuarioRepository.findByUsername(username);
+            if (usuario == null) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Usuario no encontrado")));
+                return;
+            }
 
-            // Actualiza el estado a suspendido en la base de datos (conforme al ENUM de MySQL)
-            boolean actualizado = pedidoRepository.actualizarEstadoPedido(pedidoId, "suspendido");
-            System.out.println("[ClienteServlet] Resultado de actualizacion: " + actualizado);
+            Cliente cliente = clienteRepository.buscarPorUsuarioId(usuario.getId());
+            if (cliente == null) {
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Sin perfil de cliente")));
+                return;
+            }
 
+            boolean actualizado = pedidoRepository.cancelarPedidoCliente(pedidoId, cliente.getId());
             if (actualizado) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Pedido cancelado exitosamente")));
             } else {
-                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("No se pudo cancelar el pedido")));
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("No se pudo cancelar el pedido o no te pertenece")));
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error: " + e.getMessage())));
+            System.err.println("CletaEats ClienteServlet error: " + e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
         }
     }
 
@@ -239,7 +253,8 @@ public class ClienteServlet extends HttpServlet {
             resp.getWriter().write(jsonResponse);
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno: " + e.getMessage() + "\"}");
+            System.err.println("CletaEats ClienteServlet error: " + e.getMessage());
+            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno del servidor.\"}");
         }
     }
 

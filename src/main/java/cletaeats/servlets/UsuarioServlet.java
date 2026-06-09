@@ -2,6 +2,7 @@ package cletaeats.servlets;
 
 import cletaeats.controllers.UsuarioController;
 import cletaeats.repositories.UsuarioRepository;
+import cletaeats.utils.LoginRateLimiter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -42,6 +43,12 @@ public class UsuarioServlet extends HttpServlet {
         // Enrutar al controlador correspondiente
         switch (pathInfo) {
             case "/login":
+                String clientIp = req.getRemoteAddr();
+                if (!LoginRateLimiter.isAllowed(clientIp)) {
+                    resp.setStatus(429);
+                    resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Demasiados intentos. Intente de nuevo en 10 minutos.\"}");
+                    return;
+                }
                 jsonResponse = usuarioController.login(jsonInput);
                 break;
             case "/registrar":
@@ -92,7 +99,8 @@ public class UsuarioServlet extends HttpServlet {
             resp.getWriter().write(jsonResponse);
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno: " + e.getMessage() + "\"}");
+            System.err.println("CletaEats UsuarioServlet error: " + e.getMessage());
+            resp.getWriter().write("{\"exito\":false, \"mensaje\":\"Error interno del servidor.\"}");
         }
     }
 }

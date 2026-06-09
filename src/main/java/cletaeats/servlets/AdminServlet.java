@@ -36,14 +36,15 @@ public class AdminServlet extends HttpServlet {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
+        if (!esAdmin(req, resp)) return;
         String pathInfo = req.getPathInfo();
         try {
             if (pathInfo == null || pathInfo.equals("/dashboard")) {
                 Map<String, Object> dashboard = new HashMap<>();
                 dashboard.put("ventasTotales", pedidoRepo.sumarVentasTotales());
                 dashboard.put("ventasPorRestaurante", pedidoRepo.obtenerVentasAgrupadasPorRestaurante());
-                dashboard.put("totalClientes", clienteRepo.listarTodos().size());
-                dashboard.put("totalRepartidores", repartidorRepo.listarTodos().size());
+                dashboard.put("totalClientes", clienteRepo.contarActivos());
+                dashboard.put("totalRepartidores", repartidorRepo.contarActivos());
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(dashboard)));
             } else if (pathInfo.equals("/restaurantes")) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(restauranteRepo.listarTodos())));
@@ -68,14 +69,16 @@ public class AdminServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(pedidoRepo.listarTodos())));
             }
         } catch (Exception e) {
+            System.err.println("CletaEats AdminServlet doGet: " + e.getMessage());
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
+        if (!esAdmin(req, resp)) return;
         String pathInfo = req.getPathInfo();
         String json = leerCuerpo(req);
 
@@ -98,13 +101,16 @@ public class AdminServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor creado")));
             }
         } catch (Exception e) {
-            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));
+            System.err.println("CletaEats AdminServlet error: " + e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
         }
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
+        if (!esAdmin(req, resp)) return;
         String pathInfo = req.getPathInfo();
         String json = leerCuerpo(req);
 
@@ -149,13 +155,16 @@ public class AdminServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Estado actualizado")));
             }
         } catch (Exception e) {
-            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));
+            System.err.println("CletaEats AdminServlet error: " + e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
         }
     }
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
+        if (!esAdmin(req, resp)) return;
         String pathInfo = req.getPathInfo();
 
         try {
@@ -177,12 +186,24 @@ public class AdminServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor eliminado")));
             } else if (pathInfo.startsWith("/pedidos/")) {
                 int id = Integer.parseInt(pathInfo.substring(9));
-                pedidoRepo.eliminar(id);
-                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Pedido eliminado")));
+                pedidoRepo.desactivarPedido(id);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Pedido desactivado")));
             }
         } catch (Exception e) {
-            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));
+            System.err.println("CletaEats AdminServlet error: " + e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
         }
+    }
+
+    private boolean esAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String rol = (String) req.getAttribute("rol");
+        if (!"admin".equals(rol)) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Acceso denegado: se requiere rol admin.")));
+            return false;
+        }
+        return true;
     }
 
     private String leerCuerpo(HttpServletRequest req) throws IOException {

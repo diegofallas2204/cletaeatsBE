@@ -58,6 +58,7 @@ public class AuthFilter implements Filter {
                     // Si falla la consulta a BD, dejamos pasar (fail-open)
                 }
                 req.setAttribute("username", username);
+                req.setAttribute("rol", JwtUtil.obtenerRol(token));
                 chain.doFilter(request, response);
                 return;
             }

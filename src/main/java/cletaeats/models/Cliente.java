@@ -10,6 +10,7 @@ public class Cliente {
     private String telefono;
     private String email;
     private String estado; // 'activo', 'suspendido'
+    private String username;
 
     public Cliente() {}
 
@@ -32,4 +33,6 @@ public class Cliente {
     public void setEmail(String email) { this.email = email; }
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 }

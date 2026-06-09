@@ -62,7 +62,8 @@ public class RepartidorServlet extends HttpServlet {
 
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error: " + e.getMessage())));
+            System.err.println("CletaEats RepartidorServlet error: " + e.getMessage());
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
         }
     }
 
@@ -153,7 +154,8 @@ public class RepartidorServlet extends HttpServlet {
 
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error: " + e.getMessage())));
+            System.err.println("CletaEats RepartidorServlet error: " + e.getMessage());
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
         }
     }
 }

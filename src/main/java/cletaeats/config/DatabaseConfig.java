@@ -55,11 +55,13 @@ public final class DatabaseConfig {
         if (jdbcUrl != null && !jdbcUrl.isBlank()) {
             return jdbcUrl;
         }
+        boolean disableSsl = "true".equalsIgnoreCase(System.getenv("DB_DISABLE_SSL"));
+        String sslParams = disableSsl
+                ? "useSSL=false&allowPublicKeyRetrieval=true"
+                : "useSSL=true&requireSSL=true&verifyServerCertificate=false";
         return String.format(
-                "jdbc:mysql://%s:%s/%s?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true",
-                HOST,
-                PORT,
-                DATABASE
+                "jdbc:mysql://%s:%s/%s?serverTimezone=UTC&%s",
+                HOST, PORT, DATABASE, sslParams
         );
     }
 
@@ -74,8 +76,12 @@ public final class DatabaseConfig {
             return rawUrl;
         }
         if (rawUrl.startsWith("mysql://")) {
+            boolean disableSsl = "true".equalsIgnoreCase(System.getenv("DB_DISABLE_SSL"));
+            String sslParams = disableSsl
+                    ? "useSSL=false&allowPublicKeyRetrieval=true"
+                    : "useSSL=true&requireSSL=true&verifyServerCertificate=false";
             return "jdbc:" + rawUrl + (rawUrl.contains("?") ? "&" : "?")
-                    + "serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true";
+                    + "serverTimezone=UTC&" + sslParams;
         }
         return null;
     }
