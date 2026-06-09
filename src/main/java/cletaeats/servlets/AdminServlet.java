@@ -57,6 +57,8 @@ public class AdminServlet extends HttpServlet {
             } else if (pathInfo.startsWith("/combos/")) {
                 int restId = Integer.parseInt(pathInfo.substring(8));
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarPorRestaurante(restId))));
+            } else if (pathInfo.equals("/pedidos")) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(pedidoRepo.listarTodos())));
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -116,6 +118,12 @@ public class AdminServlet extends HttpServlet {
                 Repartidor r = gson.fromJson(json, Repartidor.class);
                 repartidorRepo.actualizar(r);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor actualizado")));
+            } else if (pathInfo.startsWith("/pedidos/")) {
+                int id = Integer.parseInt(pathInfo.substring(9));
+                com.google.gson.JsonObject body = gson.fromJson(json, com.google.gson.JsonObject.class);
+                String estado = body.get("estado").getAsString();
+                pedidoRepo.actualizarEstadoPedido(id, estado);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Estado actualizado")));
             }
         } catch (Exception e) {
             resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));
@@ -144,6 +152,10 @@ public class AdminServlet extends HttpServlet {
                 int id = Integer.parseInt(pathInfo.substring(14));
                 repartidorRepo.eliminar(id);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor eliminado")));
+            } else if (pathInfo.startsWith("/pedidos/")) {
+                int id = Integer.parseInt(pathInfo.substring(9));
+                pedidoRepo.eliminar(id);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Pedido eliminado")));
             }
         } catch (Exception e) {
             resp.getWriter().write(gson.toJson(RespuestaJSON.fallar(e.getMessage())));

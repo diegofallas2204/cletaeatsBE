@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>CletaEats Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-  // AUTH GUARD
-  if (!localStorage.getItem('adminToken')) {
-    window.location.href = 'login.html';
-  }
+  if (!localStorage.getItem('adminToken')) window.location.href = 'login.html';
 </script>
 <style>
   :root {
@@ -98,11 +96,7 @@
   .btn-logout:hover { background: var(--red-accent); border-color: var(--red-accent); }
 
   /* ─── LAYOUT ─── */
-  #layout {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
+  #layout { display: flex; flex: 1; overflow: hidden; }
 
   /* ─── SIDEBAR ─── */
   #sidebar {
@@ -151,10 +145,11 @@
     width: 10px; height: 10px; border-radius: 50%;
     flex-shrink: 0;
   }
-  .dot-cliente { background: #e67e22; }
-  .dot-restaurante { background: var(--brown-mid); }
+  .dot-cliente    { background: #e67e22; }
+  .dot-restaurante{ background: var(--brown-mid); }
   .dot-repartidor { background: var(--green-accent); }
-  .dot-producto { background: var(--blue-accent); }
+  .dot-producto   { background: var(--blue-accent); }
+  .dot-pedido     { background: #8e44ad; }
 
   /* ─── MAIN CONTENT ─── */
   #main {
@@ -166,12 +161,12 @@
     gap: 16px;
   }
 
-  /* ─── DASHBOARD VIEW ─── */
-  #dashboard {
+  /* ─── DASHBOARD ─── */
+  #dashboard { display: flex; flex-direction: column; gap: 16px; }
+  .kpi-row {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
-    width: 100%;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
   }
   .summary-card {
     background: var(--white-card);
@@ -185,31 +180,45 @@
   .summary-card:hover { box-shadow: 0 8px 28px rgba(61,26,14,0.15); transform: translateY(-2px); }
   .summary-card h3 {
     font-family: 'Fredoka One', cursive;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--brown-dark);
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     text-align: center;
   }
   .summary-card .val {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 800;
     text-align: center;
     color: var(--brown-mid);
   }
+  .chart-card {
+    background: var(--white-card);
+    border-radius: 18px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 16px rgba(61,26,14,0.08);
+    border: 2px solid var(--cream-dark);
+  }
+  .chart-card h3 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--brown-dark);
+    margin-bottom: 14px;
+  }
+  .chart-wrap { position: relative; height: 260px; }
 
-  /* ─── FOOD IMAGES PANEL ─── */
+  /* ─── FOOD FILTER ─── */
   #food-panel {
     display: flex;
     justify-content: center;
-    gap: 12px;
-    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
     padding: 10px;
     background: var(--white-card);
     border-radius: 16px;
     border: 2px solid var(--cream-dark);
   }
   .food-thumb {
-    width: 60px; height: 60px;
+    width: 56px; height: 56px;
     border-radius: 12px;
     cursor: pointer;
     border: 3px solid transparent;
@@ -217,17 +226,12 @@
     transition: all 0.2s;
     background: var(--brown-dark);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem;
-    position: relative;
+    font-size: 1.7rem;
   }
   .food-thumb:hover { transform: scale(1.1); border-color: var(--orange-soft); }
   .food-thumb.active { border-color: var(--orange-soft); background: var(--brown-mid); }
-  .food-thumb .tip {
-    position: absolute; bottom: -20px; font-size: 0.6rem; color: var(--text-mid); font-weight: 800;
-    white-space: nowrap;
-  }
 
-  /* ─── SECTION VIEWS (CRUD) ─── */
+  /* ─── SECTION VIEWS ─── */
   .section-view { display: none; flex-direction: column; gap: 16px; flex: 1; }
   .section-view.visible { display: flex; }
 
@@ -235,13 +239,16 @@
     display: flex; align-items: center; gap: 12px;
     justify-content: space-between;
     flex-wrap: wrap;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
   .section-header h2 {
     font-family: 'Fredoka One', cursive;
     font-size: 1.5rem;
     color: var(--brown-dark);
   }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ─── BUTTONS ─── */
   .btn {
     padding: 8px 18px;
     border-radius: 10px;
@@ -258,9 +265,36 @@
   .btn-danger:hover { background: #a93226; }
   .btn-edit { background: var(--orange-soft); color: var(--brown-dark); }
   .btn-edit:hover { background: var(--brown-light); }
+  .btn-export { background: var(--green-accent); color: #fff; }
+  .btn-export:hover { background: #4a7530; }
   .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
 
-  /* TABLE */
+  /* ─── STATUS FILTER TABS ─── */
+  .status-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    background: var(--white-card);
+    border-radius: 14px;
+    border: 2px solid var(--cream-dark);
+  }
+  .stab {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 2px solid var(--cream-dark);
+    background: var(--cream);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-mid);
+  }
+  .stab:hover { border-color: var(--brown-light); }
+  .stab.active { background: var(--brown-dark); color: #fff; border-color: var(--brown-dark); }
+
+  /* ─── TABLE ─── */
   .table-wrap {
     background: var(--white-card);
     border-radius: 16px;
@@ -281,8 +315,21 @@
   tbody tr { border-bottom: 1.5px solid var(--cream-dark); }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--cream); }
-  tbody td { padding: 11px 16px; font-size: 0.88rem; color: var(--text-mid); }
+  tbody td { padding: 10px 16px; font-size: 0.88rem; color: var(--text-mid); }
   .actions-cell { display: flex; gap: 6px; align-items: center; }
+
+  /* ─── STATUS SELECT ─── */
+  .estado-select {
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 2px solid var(--cream-dark);
+    background: var(--cream);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    cursor: pointer;
+  }
 
   /* ─── MODAL ─── */
   .modal-overlay {
@@ -330,20 +377,27 @@
   .form-group input:focus, .form-group select:focus { border-color: var(--brown-light); }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
+  /* ─── BADGES ─── */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+  .badge-green    { background: #d4edda; color: #1a6b2e; }
+  .badge-orange   { background: #fdebd0; color: #8a4a0e; }
+  .badge-blue     { background: #d6eaf8; color: #154360; }
+  .badge-purple   { background: #e8daef; color: #5b2c6f; }
+  .badge-red      { background: #fadbd8; color: #922b21; }
+  .badge-gray     { background: #e5e8e8; color: #424949; }
+
   /* scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--cream); }
   ::-webkit-scrollbar-thumb { background: var(--brown-light); border-radius: 6px; }
 
-  .badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 800;
-  }
-  .badge-green { background: #d4edda; color: #1a6b2e; }
-  .badge-orange { background: #fdebd0; color: #8a4a0e; }
+  .empty-row td { text-align: center; color: var(--text-mid); padding: 24px; font-style: italic; }
 </style>
 </head>
 <body>
@@ -367,17 +421,20 @@
     <div class="nav-item active" data-section="dashboard" onclick="goTo('dashboard', this)">
       <span class="dot dot-cliente"></span><span class="nav-label">Inicio</span>
     </div>
+    <div class="nav-item" data-section="pedidos" onclick="goTo('pedidos', this)">
+      <span class="dot dot-pedido"></span><span class="nav-label">Pedidos</span>
+    </div>
     <div class="nav-item" data-section="clientes" onclick="goTo('clientes', this)">
-      <span class="dot dot-cliente"></span><span class="nav-label">Cliente</span>
+      <span class="dot dot-cliente"></span><span class="nav-label">Clientes</span>
     </div>
     <div class="nav-item" data-section="restaurantes" onclick="goTo('restaurantes', this)">
-      <span class="dot dot-restaurante"></span><span class="nav-label">Restaurante</span>
+      <span class="dot dot-restaurante"></span><span class="nav-label">Restaurantes</span>
     </div>
     <div class="nav-item" data-section="repartidores" onclick="goTo('repartidores', this)">
-      <span class="dot dot-repartidor"></span><span class="nav-label">Repartidor</span>
+      <span class="dot dot-repartidor"></span><span class="nav-label">Repartidores</span>
     </div>
     <div class="nav-item" data-section="productos" onclick="goTo('productos', this)">
-      <span class="dot dot-producto"></span><span class="nav-label">Producto</span>
+      <span class="dot dot-producto"></span><span class="nav-label">Combos</span>
     </div>
   </nav>
 
@@ -386,17 +443,62 @@
 
     <!-- ══ DASHBOARD ══ -->
     <div id="dashboard" class="section-view visible">
-      <div class="summary-card"><h3>Ventas Totales</h3><div class="val" id="dashVentas">...</div></div>
-      <div class="summary-card"><h3>Restaurantes</h3><div class="val" id="dashRestCount">...</div></div>
-      <div class="summary-card"><h3>Clientes</h3><div class="val" id="dashCliCount">...</div></div>
-      <div class="summary-card"><h3>Repartidores</h3><div class="val" id="dashRepCount">...</div></div>
+      <div class="kpi-row">
+        <div class="summary-card"><h3>💰 Ventas Totales</h3><div class="val" id="dashVentas">...</div></div>
+        <div class="summary-card"><h3>📦 Total Pedidos</h3><div class="val" id="dashPedidos">...</div></div>
+        <div class="summary-card"><h3>🏪 Restaurantes</h3><div class="val" id="dashRestCount">...</div></div>
+        <div class="summary-card"><h3>👤 Clientes</h3><div class="val" id="dashCliCount">...</div></div>
+        <div class="summary-card"><h3>🛵 Repartidores</h3><div class="val" id="dashRepCount">...</div></div>
+        <div class="summary-card"><h3>⏳ Pendientes</h3><div class="val" id="dashPendientes">...</div></div>
+      </div>
+      <div class="chart-card">
+        <h3>📊 Ventas por Restaurante</h3>
+        <div class="chart-wrap"><canvas id="ventasChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📋 Pedidos por Estado</h3>
+        <div class="chart-wrap"><canvas id="estadosChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ PEDIDOS ══ -->
+    <div id="pedidos" class="section-view">
+      <div class="section-header">
+        <h2>📦 Pedidos</h2>
+        <div class="header-actions">
+          <button class="btn btn-export btn-sm" onclick="exportCSV('pedidos')">⬇ Exportar CSV</button>
+        </div>
+      </div>
+      <div class="status-tabs" id="pedidoTabs">
+        <button class="stab active" onclick="filterPedidos('', this)">Todos</button>
+        <button class="stab" onclick="filterPedidos('pendiente', this)">Pendiente</button>
+        <button class="stab" onclick="filterPedidos('preparando', this)">Preparando</button>
+        <button class="stab" onclick="filterPedidos('aceptado', this)">Aceptado</button>
+        <button class="stab" onclick="filterPedidos('camino', this)">En Camino</button>
+        <button class="stab" onclick="filterPedidos('entregado', this)">Entregado</button>
+        <button class="stab" onclick="filterPedidos('suspendido', this)">Suspendido</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Cliente</th><th>Restaurante</th>
+              <th>Total</th><th>Fecha</th><th>Estado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbPedidos"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ══ CLIENTES ══ -->
     <div id="clientes" class="section-view">
       <div class="section-header">
         <h2>👤 Clientes</h2>
-        <button class="btn btn-primary" onclick="openModal('cliente')">+ Nuevo Cliente</button>
+        <div class="header-actions">
+          <button class="btn btn-export btn-sm" onclick="exportCSV('clientes')">⬇ Exportar CSV</button>
+          <button class="btn btn-primary" onclick="openModal('cliente')">+ Nuevo Cliente</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
@@ -410,26 +512,26 @@
     <div id="restaurantes" class="section-view">
       <div class="section-header">
         <h2>🏪 Restaurantes</h2>
-        <button class="btn btn-primary" onclick="openModal('restaurante')">+ Nuevo Restaurante</button>
+        <div class="header-actions">
+          <button class="btn btn-export btn-sm" onclick="exportCSV('restaurantes')">⬇ Exportar CSV</button>
+          <button class="btn btn-primary" onclick="openModal('restaurante')">+ Nuevo Restaurante</button>
+        </div>
       </div>
-      
-      <!-- FOOD PANEL (FILTER) -->
       <div id="food-panel">
-        <div class="food-thumb" onclick="filterByFood('')" title="Todos">🏠<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('pizza')" title="Pizza">🍕<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('rápida')" title="Rápida">🍔<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('pasta')" title="Pasta">🍝<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('ensalada')" title="Ensalada">🥗<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('sushi')" title="Sushi">🍣<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('café')" title="Café">☕<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('postres')" title="Postres">🍰<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('tacos')" title="Tacos">🌮<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('pollo')" title="Pollo">🍗<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('china')" title="China">🥡<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('mariscos')" title="Mariscos">🍤<span class="tip"></span></div>
-        <div class="food-thumb" onclick="filterByFood('bebidas')" title="Bebidas">🥤<span class="tip"></span></div>
+        <div class="food-thumb active" onclick="filterByFood('', this)" title="Todos">🏠</div>
+        <div class="food-thumb" onclick="filterByFood('pizza', this)" title="Pizza">🍕</div>
+        <div class="food-thumb" onclick="filterByFood('burger', this)" title="Burger">🍔</div>
+        <div class="food-thumb" onclick="filterByFood('pasta', this)" title="Pasta">🍝</div>
+        <div class="food-thumb" onclick="filterByFood('ensalada', this)" title="Ensalada">🥗</div>
+        <div class="food-thumb" onclick="filterByFood('sushi', this)" title="Sushi">🍣</div>
+        <div class="food-thumb" onclick="filterByFood('café', this)" title="Café">☕</div>
+        <div class="food-thumb" onclick="filterByFood('postres', this)" title="Postres">🍰</div>
+        <div class="food-thumb" onclick="filterByFood('tacos', this)" title="Tacos">🌮</div>
+        <div class="food-thumb" onclick="filterByFood('pollo', this)" title="Pollo">🍗</div>
+        <div class="food-thumb" onclick="filterByFood('china', this)" title="China">🥡</div>
+        <div class="food-thumb" onclick="filterByFood('mariscos', this)" title="Mariscos">🍤</div>
+        <div class="food-thumb" onclick="filterByFood('bebidas', this)" title="Bebidas">🥤</div>
       </div>
-
       <div class="table-wrap">
         <table>
           <thead><tr><th>#</th><th>Nombre</th><th>Tipo de Comida</th><th>Cédula Jurídica</th><th>Acciones</th></tr></thead>
@@ -442,7 +544,10 @@
     <div id="repartidores" class="section-view">
       <div class="section-header">
         <h2>🛵 Repartidores</h2>
-        <button class="btn btn-primary" onclick="openModal('repartidor')">+ Nuevo Repartidor</button>
+        <div class="header-actions">
+          <button class="btn btn-export btn-sm" onclick="exportCSV('repartidores')">⬇ Exportar CSV</button>
+          <button class="btn btn-primary" onclick="openModal('repartidor')">+ Nuevo Repartidor</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
@@ -452,11 +557,14 @@
       </div>
     </div>
 
-    <!-- ══ PRODUCTOS ══ -->
+    <!-- ══ COMBOS / PRODUCTOS ══ -->
     <div id="productos" class="section-view">
       <div class="section-header">
         <h2>🍱 Combos / Productos</h2>
-        <button class="btn btn-primary" onclick="openModal('producto')">+ Nuevo Producto</button>
+        <div class="header-actions">
+          <button class="btn btn-export btn-sm" onclick="exportCSV('productos')">⬇ Exportar CSV</button>
+          <button class="btn btn-primary" onclick="openModal('producto')">+ Nuevo Combo</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
@@ -483,40 +591,33 @@
 
 <script>
 const API_BASE = '/api/admin';
-const TOKEN = localStorage.getItem('adminToken');
+const TOKEN    = localStorage.getItem('adminToken');
 
-let data = {
-  clientes: [],
-  restaurantes: [],
-  repartidores: [],
-  productos: [],
-  dashboard: {}
-};
-
-let currentFoodFilter = '';
-let editingId = null;
+let data = { clientes:[], restaurantes:[], repartidores:[], productos:[], pedidos:[], dashboard:{} };
+let currentFoodFilter  = '';
+let currentPedidoFilter = '';
+let editingId    = null;
 let currentEntity = null;
 let sidebarCollapsed = false;
+let ventasChart  = null;
+let estadosChart = null;
 
 // ════════════════════════════════
-//  AUTH & NAVIGATION
+//  AUTH & NAV
 // ════════════════════════════════
-function logout() {
-  localStorage.removeItem('adminToken');
-  window.location.href = 'login.html';
-}
+function logout() { localStorage.removeItem('adminToken'); window.location.href = 'login.html'; }
 
 async function goTo(section, el) {
   document.querySelectorAll('.section-view').forEach(v => v.classList.remove('visible'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(section).classList.add('visible');
-  if(el) el.classList.add('active');
+  if (el) el.classList.add('active');
   await renderAll();
 }
 
 function toggleSidebar() {
   sidebarCollapsed = !sidebarCollapsed;
-  const sb = document.getElementById('sidebar');
+  const sb  = document.getElementById('sidebar');
   const btn = sb.querySelector('.toggle-btn');
   sb.classList.toggle('collapsed', sidebarCollapsed);
   btn.textContent = sidebarCollapsed ? '❯❯' : '❮❮';
@@ -526,24 +627,25 @@ function toggleSidebar() {
 //  DATA FETCHING
 // ════════════════════════════════
 async function fetchData(endpoint) {
-  const resp = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { 'Authorization': `Bearer ${TOKEN}` }
-  });
-  
+  const resp = await fetch(`${API_BASE}${endpoint}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
   if (resp.status === 401) logout();
-  
   const json = await resp.json();
-  return json.success ? json.data : [];
+  return json.success ? (json.data || []) : [];
 }
 
 async function renderAll(filter='') {
-  data.clientes = await fetchData('/clientes');
-  data.restaurantes = await fetchData('/restaurantes');
-  data.repartidores = await fetchData('/repartidores');
-  data.productos = await fetchData('/combos');
-  data.dashboard = await fetchData('/dashboard');
+  const [clientes, restaurantes, repartidores, productos, pedidos, dashboard] = await Promise.all([
+    fetchData('/clientes'),
+    fetchData('/restaurantes'),
+    fetchData('/repartidores'),
+    fetchData('/combos'),
+    fetchData('/pedidos'),
+    fetchData('/dashboard'),
+  ]);
+  data = { clientes, restaurantes, repartidores, productos, pedidos, dashboard };
 
   renderDashboard();
+  renderPedidos(filter);
   renderClientes(filter);
   renderRestaurantes(filter);
   renderRepartidores(filter);
@@ -551,37 +653,140 @@ async function renderAll(filter='') {
 }
 
 // ════════════════════════════════
-//  FILTERING
-// ════════════════════════════════
-function filterByFood(type) {
-  currentFoodFilter = type.toLowerCase();
-  
-  // UI update
-  document.querySelectorAll('.food-thumb').forEach(t => {
-    t.classList.remove('active');
-    if (t.getAttribute('onclick').includes(`'${type}'`)) t.classList.add('active');
-  });
-
-  renderRestaurantes();
-}
-
-// ════════════════════════════════
-//  RENDER COMPONENTS
+//  DASHBOARD + CHARTS
 // ════════════════════════════════
 function renderDashboard() {
-  document.getElementById('dashVentas').textContent = '₡' + (data.dashboard.ventasTotales || 0).toLocaleString();
+  const d = data.dashboard;
+  const pedidosTotal = data.pedidos.length;
+  const pendientes   = data.pedidos.filter(p => p.estado === 'pendiente').length;
+
+  document.getElementById('dashVentas').textContent    = '₡' + ((d.ventasTotales || 0)).toLocaleString('es-CR', {maximumFractionDigits:0});
+  document.getElementById('dashPedidos').textContent   = pedidosTotal;
   document.getElementById('dashRestCount').textContent = data.restaurantes.length;
-  document.getElementById('dashCliCount').textContent = data.dashboard.totalClientes || 0;
-  document.getElementById('dashRepCount').textContent = data.dashboard.totalRepartidores || 0;
+  document.getElementById('dashCliCount').textContent  = d.totalClientes  || 0;
+  document.getElementById('dashRepCount').textContent  = d.totalRepartidores || 0;
+  document.getElementById('dashPendientes').textContent = pendientes;
+
+  // Gráfica ventas por restaurante
+  const vpr = d.ventasPorRestaurante || [];
+  const labels1 = vpr.map(r => r.nombreRestaurante || r.nombre || '');
+  const values1 = vpr.map(r => r.totalVendido || 0);
+  if (ventasChart) ventasChart.destroy();
+  ventasChart = new Chart(document.getElementById('ventasChart'), {
+    type: 'bar',
+    data: {
+      labels: labels1,
+      datasets: [{ label: 'Ventas (₡)', data: values1,
+        backgroundColor: '#c47a4a', borderRadius: 8 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => '₡' + v.toLocaleString() } } }
+    }
+  });
+
+  // Gráfica pedidos por estado
+  const estados = ['pendiente','preparando','aceptado','camino','entregado','suspendido'];
+  const colores = ['#f39c12','#3498db','#9b59b6','#1abc9c','#27ae60','#e74c3c'];
+  const counts  = estados.map(e => data.pedidos.filter(p => p.estado === e).length);
+  if (estadosChart) estadosChart.destroy();
+  estadosChart = new Chart(document.getElementById('estadosChart'), {
+    type: 'doughnut',
+    data: {
+      labels: estados.map(e => e.charAt(0).toUpperCase() + e.slice(1)),
+      datasets: [{ data: counts, backgroundColor: colores, borderWidth: 2 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right' } } }
+  });
 }
 
+// ════════════════════════════════
+//  RENDER PEDIDOS
+// ════════════════════════════════
+function estadoBadge(estado) {
+  const map = {
+    pendiente:  'badge-orange',
+    preparando: 'badge-blue',
+    aceptado:   'badge-purple',
+    camino:     'badge-blue',
+    entregado:  'badge-green',
+    suspendido: 'badge-red',
+  };
+  return `<span class="badge ${map[estado] || 'badge-gray'}">${estado}</span>`;
+}
+
+function renderPedidos(textFilter='') {
+  const tb = document.getElementById('tbPedidos');
+  let list = data.pedidos.filter(p => {
+    const matchText   = !textFilter || JSON.stringify(p).toLowerCase().includes(textFilter.toLowerCase());
+    const matchStatus = !currentPedidoFilter || p.estado === currentPedidoFilter;
+    return matchText && matchStatus;
+  });
+
+  if (!list.length) {
+    tb.innerHTML = '<tr class="empty-row"><td colspan="7">Sin pedidos para mostrar</td></tr>';
+    return;
+  }
+
+  tb.innerHTML = list.map(p => `
+    <tr>
+      <td>${p.id}</td>
+      <td>${p.clienteNombre || p.clienteId}</td>
+      <td>${p.restauranteNombre || p.restauranteId}</td>
+      <td>₡${(p.total||0).toLocaleString('es-CR',{maximumFractionDigits:0})}</td>
+      <td>${p.fechaPedido ? p.fechaPedido.substring(0,16).replace('T',' ') : '—'}</td>
+      <td>${estadoBadge(p.estado)}</td>
+      <td><div class="actions-cell">
+        <select class="estado-select" onchange="updateOrderStatus(${p.id}, this.value)">
+          <option value="">Cambiar…</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="preparando">Preparando</option>
+          <option value="aceptado">Aceptado</option>
+          <option value="camino">En Camino</option>
+          <option value="entregado">Entregado</option>
+          <option value="suspendido">Suspendido</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="deletePedido(${p.id})">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function filterPedidos(estado, el) {
+  currentPedidoFilter = estado;
+  document.querySelectorAll('#pedidoTabs .stab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderPedidos(document.getElementById('globalSearch').value);
+}
+
+async function updateOrderStatus(id, estado) {
+  if (!estado) return;
+  await fetch(`${API_BASE}/pedidos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+    body: JSON.stringify({ estado })
+  });
+  await renderAll();
+}
+
+async function deletePedido(id) {
+  if (!confirm('¿Eliminar este pedido permanentemente?')) return;
+  await fetch(`${API_BASE}/pedidos/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${TOKEN}` } });
+  await renderAll();
+}
+
+// ════════════════════════════════
+//  RENDER CRUD TABLES
+// ════════════════════════════════
 function renderClientes(filter='') {
-  const tb = document.getElementById('tbClientes');
-  const list = data.clientes.filter(c=>JSON.stringify(c).toLowerCase().includes(filter.toLowerCase()));
+  const tb   = document.getElementById('tbClientes');
+  const list = data.clientes.filter(c => JSON.stringify(c).toLowerCase().includes(filter.toLowerCase()));
+  if (!list.length) { tb.innerHTML = '<tr class="empty-row"><td colspan="6">Sin clientes</td></tr>'; return; }
   tb.innerHTML = list.map(c=>`
     <tr>
       <td>${c.id}</td><td>${c.nombre}</td><td>${c.email}</td>
-      <td>${c.telefono}</td><td>${c.cedula}</td>
+      <td>${c.telefono||'—'}</td><td>${c.cedula||'—'}</td>
       <td><div class="actions-cell">
         <button class="btn btn-edit btn-sm" onclick="openEdit('cliente',${c.id})">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRecord('clientes',${c.id})">🗑️</button>
@@ -591,16 +796,13 @@ function renderClientes(filter='') {
 
 function renderRestaurantes(filter='') {
   const tb = document.getElementById('tbRestaurantes');
-  let list = data.restaurantes.filter(r=>JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
-  
-  if (currentFoodFilter) {
-    list = list.filter(r => (r.tipoComida || '').toLowerCase().includes(currentFoodFilter));
-  }
-
+  let list = data.restaurantes.filter(r => JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
+  if (currentFoodFilter) list = list.filter(r => (r.tipoComida||'').toLowerCase().includes(currentFoodFilter));
+  if (!list.length) { tb.innerHTML = '<tr class="empty-row"><td colspan="5">Sin restaurantes</td></tr>'; return; }
   tb.innerHTML = list.map(r=>`
     <tr>
-      <td>${r.id}</td><td>${r.nombre}</td><td>${r.tipoComida}</td>
-      <td>${r.cedulaJuridica}</td>
+      <td>${r.id}</td><td>${r.nombre}</td><td>${r.tipoComida||'—'}</td>
+      <td>${r.cedulaJuridica||'—'}</td>
       <td><div class="actions-cell">
         <button class="btn btn-edit btn-sm" onclick="openEdit('restaurante',${r.id})">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRecord('restaurantes',${r.id})">🗑️</button>
@@ -609,13 +811,14 @@ function renderRestaurantes(filter='') {
 }
 
 function renderRepartidores(filter='') {
-  const tb = document.getElementById('tbRepartidores');
-  const list = data.repartidores.filter(r=>JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
+  const tb   = document.getElementById('tbRepartidores');
+  const list = data.repartidores.filter(r => JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
+  if (!list.length) { tb.innerHTML = '<tr class="empty-row"><td colspan="6">Sin repartidores</td></tr>'; return; }
   tb.innerHTML = list.map(r=>`
     <tr>
       <td>${r.id}</td><td>${r.nombre}</td><td>${r.email}</td>
-      <td>${r.cedula}</td>
-      <td><span class="badge ${r.estado==='disponible'?'badge-green':'badge-orange'}">${r.estado}</span></td>
+      <td>${r.cedula||'—'}</td>
+      <td><span class="badge ${r.estado==='disponible'?'badge-green':'badge-orange'}">${r.estado||'—'}</span></td>
       <td><div class="actions-cell">
         <button class="btn btn-edit btn-sm" onclick="openEdit('repartidor',${r.id})">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRecord('repartidores',${r.id})">🗑️</button>
@@ -624,12 +827,13 @@ function renderRepartidores(filter='') {
 }
 
 function renderProductos(filter='') {
-  const tb = document.getElementById('tbProductos');
-  const list = data.productos.filter(p=>JSON.stringify(p).toLowerCase().includes(filter.toLowerCase()));
+  const tb   = document.getElementById('tbProductos');
+  const list = data.productos.filter(p => JSON.stringify(p).toLowerCase().includes(filter.toLowerCase()));
+  if (!list.length) { tb.innerHTML = '<tr class="empty-row"><td colspan="5">Sin combos</td></tr>'; return; }
   tb.innerHTML = list.map(p=>`
     <tr>
       <td>${p.id}</td><td>${p.nombre}</td><td>${p.restauranteId}</td>
-      <td>₡${(p.precio || 0).toLocaleString()}</td>
+      <td>₡${(p.precio||0).toLocaleString()}</td>
       <td><div class="actions-cell">
         <button class="btn btn-edit btn-sm" onclick="openEdit('producto',${p.id})">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRecord('combos',${p.id})">🗑️</button>
@@ -637,7 +841,45 @@ function renderProductos(filter='') {
     </tr>`).join('');
 }
 
+function filterByFood(type, el) {
+  currentFoodFilter = type.toLowerCase();
+  document.querySelectorAll('.food-thumb').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderRestaurantes(document.getElementById('globalSearch').value);
+}
+
 function onSearch(v) { renderAll(v); }
+
+// ════════════════════════════════
+//  EXPORT CSV
+// ════════════════════════════════
+function exportCSV(section) {
+  const maps = {
+    pedidos: { list: data.pedidos,
+      cols: ['id','clienteNombre','restauranteNombre','subtotal','costoEnvio','iva','total','estado','fechaPedido'],
+      heads: ['ID','Cliente','Restaurante','Subtotal','Costo Envío','IVA','Total','Estado','Fecha'] },
+    clientes: { list: data.clientes,
+      cols: ['id','nombre','email','telefono','cedula','direccion','estado'],
+      heads: ['ID','Nombre','Email','Teléfono','Cédula','Dirección','Estado'] },
+    restaurantes: { list: data.restaurantes,
+      cols: ['id','nombre','tipoComida','cedulaJuridica','direccion'],
+      heads: ['ID','Nombre','Tipo','Cédula Jurídica','Dirección'] },
+    repartidores: { list: data.repartidores,
+      cols: ['id','nombre','email','cedula','estado'],
+      heads: ['ID','Nombre','Email','Cédula','Estado'] },
+    productos: { list: data.productos,
+      cols: ['id','nombre','restauranteId','numeroCombo','precio'],
+      heads: ['ID','Nombre','Restaurante ID','Nº Combo','Precio'] },
+  };
+  const { list, cols, heads } = maps[section];
+  const rows = [heads, ...list.map(r => cols.map(c => `"${(r[c]??'').toString().replace(/"/g,'""')}"`))];
+  const csv  = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `cletaeats_${section}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
 
 // ════════════════════════════════
 //  MODALS
@@ -649,27 +891,19 @@ const forms = {
     <div class="form-group"><label>Teléfono</label><input id="f_telefono" value="${d.telefono||''}"/></div>
     <div class="form-group"><label>Cédula</label><input id="f_cedula" value="${d.cedula||''}"/></div>
     <div class="form-group"><label>Dirección</label><input id="f_direccion" value="${d.direccion||''}"/></div>
-    <div class="form-group"><label>Tarjeta</label><input id="f_tarjeta" value="${d.tarjeta||''}"/></div>
     <div class="form-group"><label>Estado</label>
-      <select id="f_estado"><option value="activo" ${d.estado==='activo'?'selected':''}>Activo</option><option value="suspendido" ${d.estado==='suspendido'?'selected':''}>Suspendido</option></select>
+      <select id="f_estado">
+        <option value="activo" ${d.estado==='activo'?'selected':''}>Activo</option>
+        <option value="suspendido" ${d.estado==='suspendido'?'selected':''}>Suspendido</option>
+      </select>
     </div>`,
   restaurante: (d={})=>`
     <div class="form-group"><label>Nombre</label><input id="f_nombre" value="${d.nombre||''}"/></div>
     <div class="form-group"><label>Cédula Jurídica</label><input id="f_cedula_juridica" value="${d.cedulaJuridica||''}"/></div>
     <div class="form-group"><label>Tipo Comida</label>
       <select id="f_tipo_comida">
-        <option value="Pizza" ${d.tipoComida==='Pizza'?'selected':''}>Pizza</option>
-        <option value="Burger" ${d.tipoComida==='Burger'?'selected':''}>Burger</option>
-        <option value="Pasta" ${d.tipoComida==='Pasta'?'selected':''}>Pasta</option>
-        <option value="Ensalada" ${d.tipoComida==='Ensalada'?'selected':''}>Ensalada</option>
-        <option value="Sushi" ${d.tipoComida==='Sushi'?'selected':''}>Sushi</option>
-        <option value="Café" ${d.tipoComida==='Café'?'selected':''}>Café</option>
-        <option value="Postres" ${d.tipoComida==='Postres'?'selected':''}>Postres</option>
-        <option value="Tacos" ${d.tipoComida==='Tacos'?'selected':''}>Tacos</option>
-        <option value="Pollo" ${d.tipoComida==='Pollo'?'selected':''}>Pollo</option>
-        <option value="China" ${d.tipoComida==='China'?'selected':''}>China</option>
-        <option value="Mariscos" ${d.tipoComida==='Mariscos'?'selected':''}>Mariscos</option>
-        <option value="Bebidas" ${d.tipoComida==='Bebidas'?'selected':''}>Bebidas</option>
+        ${['Pizza','Burger','Pasta','Ensalada','Sushi','Café','Postres','Tacos','Pollo','China','Mariscos','Bebidas']
+          .map(t=>`<option value="${t}" ${d.tipoComida===t?'selected':''}>${t}</option>`).join('')}
       </select>
     </div>
     <div class="form-group"><label>Dirección</label><input id="f_direccion" value="${d.direccion||''}"/></div>`,
@@ -678,73 +912,76 @@ const forms = {
     <div class="form-group"><label>Email</label><input id="f_email" value="${d.email||''}"/></div>
     <div class="form-group"><label>Cédula</label><input id="f_cedula" value="${d.cedula||''}"/></div>
     <div class="form-group"><label>Dirección</label><input id="f_direccion" value="${d.direccion||''}"/></div>
-    <div class="form-group"><label>Tarjeta</label><input id="f_tarjeta" value="${d.tarjeta||''}"/></div>
     <div class="form-group"><label>Estado</label>
-      <select id="f_estado"><option value="disponible" ${d.estado==='disponible'?'selected':''}>Disponible</option><option value="ocupado" ${d.estado==='ocupado'?'selected':''}>Ocupado</option></select>
+      <select id="f_estado">
+        <option value="disponible" ${d.estado==='disponible'?'selected':''}>Disponible</option>
+        <option value="ocupado" ${d.estado==='ocupado'?'selected':''}>Ocupado</option>
+      </select>
     </div>`,
   producto: (d={})=>`
     <div class="form-group"><label>Nombre</label><input id="f_nombre" value="${d.nombre||''}"/></div>
     <div class="form-group"><label>Restaurante ID</label><input id="f_restaurante_id" type="number" value="${d.restauranteId||''}"/></div>
     <div class="form-group"><label>Número Combo (1-9)</label><input id="f_numero_combo" type="number" value="${d.numeroCombo||''}"/></div>
-    <div class="form-group"><label>Precio</label><input id="f_precio" type="number" value="${d.precio||''}"/></div>`,
+    <div class="form-group"><label>Precio (₡)</label><input id="f_precio" type="number" value="${d.precio||''}"/></div>`,
 };
 
 function openModal(entity, id=null) {
   currentEntity = entity;
-  editingId = id;
-  const plural = entity==='cliente'?'clientes':entity==='restaurante'?'restaurantes':entity==='repartidor'?'repartidores':'productos';
-  const rec = id ? data[plural].find(r=>r.id===id) : {};
-  document.getElementById('modalTitle').textContent = (id?'Editar ':'Nuevo ') + entity;
-  document.getElementById('modalBody').innerHTML = forms[entity](rec||{});
+  editingId     = id;
+  const plural  = entityToPlural(entity);
+  const rec     = id ? data[plural].find(r => r.id === id) : {};
+  document.getElementById('modalTitle').textContent  = (id?'Editar ':'Nuevo ') + entity;
+  document.getElementById('modalBody').innerHTML     = forms[entity](rec||{});
   document.getElementById('modalOverlay').classList.add('open');
 }
 
 function openEdit(entity, id) { openModal(entity, id); }
-function closeModal(e) { if(e.target===document.getElementById('modalOverlay')) closeModalDirect(); }
+function closeModal(e) { if (e.target === document.getElementById('modalOverlay')) closeModalDirect(); }
 function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open'); editingId=null; currentEntity=null; }
+
+function entityToPlural(e) {
+  return e==='cliente'?'clientes':e==='restaurante'?'restaurantes':e==='repartidor'?'repartidores':'productos';
+}
 
 async function saveRecord() {
   const entity = currentEntity;
-  const plural = entity==='cliente'?'clientes':entity==='restaurante'?'restaurantes':entity==='repartidor'?'repartidores':'combos';
-  
+  const apiKey = entity==='cliente'?'clientes':entity==='restaurante'?'restaurantes':entity==='repartidor'?'repartidores':'combos';
   let rec = { id: editingId };
-  if(entity==='cliente') {
-    rec = { ...rec, nombre:v('f_nombre'), email:v('f_email'), telefono:v('f_telefono'), cedula:v('f_cedula'), direccion:v('f_direccion'), tarjeta:v('f_tarjeta'), estado:v('f_estado') };
-  } else if(entity==='restaurante') {
-    rec = { ...rec, nombre:v('f_nombre'), cedulaJuridica:v('f_cedula_juridica'), tipoComida:v('f_tipo_comida'), direccion:v('f_direccion') };
-  } else if(entity==='repartidor') {
-    rec = { ...rec, nombre:v('f_nombre'), email:v('f_email'), cedula:v('f_cedula'), direccion:v('f_direccion'), tarjeta:v('f_tarjeta'), estado:v('f_estado') };
-  } else if(entity==='producto') {
-    rec = { ...rec, nombre:v('f_nombre'), restauranteId:parseInt(v('f_restaurante_id')), numeroCombo:parseInt(v('f_numero_combo')), precio:parseFloat(v('f_precio')) };
+
+  if (entity==='cliente') {
+    rec = { ...rec, nombre:v('f_nombre'), email:v('f_email'), telefono:v('f_telefono'),
+            cedula:v('f_cedula'), direccion:v('f_direccion'), estado:v('f_estado') };
+  } else if (entity==='restaurante') {
+    rec = { ...rec, nombre:v('f_nombre'), cedulaJuridica:v('f_cedula_juridica'),
+            tipoComida:v('f_tipo_comida'), direccion:v('f_direccion') };
+  } else if (entity==='repartidor') {
+    rec = { ...rec, nombre:v('f_nombre'), email:v('f_email'),
+            cedula:v('f_cedula'), direccion:v('f_direccion'), estado:v('f_estado') };
+  } else if (entity==='producto') {
+    rec = { ...rec, nombre:v('f_nombre'), restauranteId:parseInt(v('f_restaurante_id')),
+            numeroCombo:parseInt(v('f_numero_combo')), precio:parseFloat(v('f_precio')) };
   }
 
-  const method = editingId ? 'PUT' : 'POST';
-  const url = `${API_BASE}/${plural}`;
-  
-  await fetch(url, {
-    method: method,
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${TOKEN}`
-    },
+  await fetch(`${API_BASE}/${apiKey}`, {
+    method: editingId ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
     body: JSON.stringify(rec)
   });
-
   closeModalDirect();
   await renderAll();
 }
 
 async function deleteRecord(plural, id) {
-  if(!confirm('¿Eliminar?')) return;
-  await fetch(`${API_BASE}/${plural}/${id}`, { 
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${TOKEN}` }
-  });
+  if (!confirm('¿Eliminar este registro?')) return;
+  await fetch(`${API_BASE}/${plural}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${TOKEN}` } });
   await renderAll();
 }
 
-function v(id) { return document.getElementById(id).value; }
+function v(id) { return document.getElementById(id)?.value ?? ''; }
 
+// ════════════════════════════════
+//  INIT
+// ════════════════════════════════
 renderAll();
 </script>
 </body>

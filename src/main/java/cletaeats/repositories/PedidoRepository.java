@@ -7,7 +7,9 @@ import cletaeats.models.ReporteRestaurante;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PedidoRepository {
     private final Conexion conexion = Conexion.getInstancia();
@@ -213,6 +215,63 @@ public class PedidoRepository {
             stmt.setInt(2, repartidorId);
             stmt.setInt(3, pedidoId);
             return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public List<Map<String, Object>> listarTodos() throws SQLException {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = "SELECT p.id, p.cliente_id, p.restaurante_id, p.repartidor_id, p.estado, " +
+                     "p.subtotal, p.costo_envio, p.iva, p.total, p.fecha_pedido, " +
+                     "IFNULL(r.nombre, '') AS restaurante_nombre, " +
+                     "IFNULL(c.nombre, '') AS cliente_nombre " +
+                     "FROM pedidos p " +
+                     "LEFT JOIN restaurantes r ON p.restaurante_id = r.id " +
+                     "LEFT JOIN clientes c ON p.cliente_id = c.id " +
+                     "ORDER BY p.fecha_pedido DESC";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("id",               rs.getInt("id"));
+                row.put("clienteId",        rs.getInt("cliente_id"));
+                row.put("restauranteId",    rs.getInt("restaurante_id"));
+                row.put("repartidorId",     rs.getInt("repartidor_id"));
+                row.put("estado",           rs.getString("estado"));
+                row.put("subtotal",         rs.getDouble("subtotal"));
+                row.put("costoEnvio",       rs.getDouble("costo_envio"));
+                row.put("iva",              rs.getDouble("iva"));
+                row.put("total",            rs.getDouble("total"));
+                row.put("fechaPedido",      rs.getString("fecha_pedido"));
+                row.put("restauranteNombre", rs.getString("restaurante_nombre"));
+                row.put("clienteNombre",    rs.getString("cliente_nombre"));
+                lista.add(row);
+            }
+        }
+        return lista;
+    }
+
+    public void eliminar(int id) throws SQLException {
+        String sqlDet = "DELETE FROM pedido_detalle WHERE pedido_id = ?";
+        String sqlPed = "DELETE FROM pedidos WHERE id = ?";
+        Connection conn = null;
+        try {
+            conn = conexion.getConnection();
+            conn.setAutoCommit(false);
+            try (PreparedStatement s1 = conn.prepareStatement(sqlDet)) {
+                s1.setInt(1, id);
+                s1.executeUpdate();
+            }
+            try (PreparedStatement s2 = conn.prepareStatement(sqlPed)) {
+                s2.setInt(1, id);
+                s2.executeUpdate();
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (conn != null) conn.setAutoCommit(true);
         }
     }
 
