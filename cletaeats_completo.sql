@@ -97,7 +97,7 @@ CREATE TABLE pedidos (
     cliente_id     INT NOT NULL,
     restaurante_id INT NOT NULL,
     repartidor_id  INT,
-    estado         ENUM('preparacion','aceptado','camino','entregado','suspendido') DEFAULT 'preparacion',
+    estado         ENUM('preparacion','pendiente','preparando','aceptado','camino','entregado','suspendido') DEFAULT 'preparacion',
     distancia_km   FLOAT    DEFAULT 0,
     subtotal       FLOAT    DEFAULT 0,
     costo_envio    FLOAT    DEFAULT 0,
@@ -105,9 +105,9 @@ CREATE TABLE pedidos (
     total          FLOAT    DEFAULT 0,
     fecha_pedido   DATETIME DEFAULT CURRENT_TIMESTAMP,
     fecha_entrega  DATETIME NULL,
-    FOREIGN KEY (cliente_id)     REFERENCES clientes(id),
-    FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id),
-    FOREIGN KEY (repartidor_id)  REFERENCES repartidores(id)
+    CONSTRAINT fk_pedidos_cliente     FOREIGN KEY (cliente_id)     REFERENCES clientes(id)     ON DELETE CASCADE,
+    CONSTRAINT fk_pedidos_restaurante FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pedidos_repartidor  FOREIGN KEY (repartidor_id)  REFERENCES repartidores(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -121,8 +121,8 @@ CREATE TABLE pedido_detalle (
     precio_unitario FLOAT,
     agrandado       BOOLEAN DEFAULT FALSE,
     notas           TEXT,
-    FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
-    FOREIGN KEY (combo_id)  REFERENCES combos(id)
+    CONSTRAINT fk_detalle_pedido FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
+    CONSTRAINT fk_detalle_combo  FOREIGN KEY (combo_id)  REFERENCES combos(id)  ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -134,8 +134,8 @@ CREATE TABLE quejas (
     repartidor_id INT  NOT NULL,
     descripcion   TEXT NOT NULL,
     fecha         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (pedido_id)     REFERENCES pedidos(id),
-    FOREIGN KEY (repartidor_id) REFERENCES repartidores(id)
+    CONSTRAINT fk_quejas_pedido      FOREIGN KEY (pedido_id)     REFERENCES pedidos(id)      ON DELETE CASCADE,
+    CONSTRAINT fk_quejas_repartidor  FOREIGN KEY (repartidor_id) REFERENCES repartidores(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ============================================================

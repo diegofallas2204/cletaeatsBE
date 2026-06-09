@@ -34,8 +34,18 @@ public class RestauranteRepository {
         }
     }
 
+    public boolean reactivar(int id) throws SQLException {
+        String sql = "UPDATE restaurantes SET activo = true WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public boolean eliminar(int id) throws SQLException {
-        String sql = "DELETE FROM restaurantes WHERE id = ?";
+        // Borrado lógico: marca el restaurante como inactivo
+        String sql = "UPDATE restaurantes SET activo = false WHERE id = ?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
@@ -44,21 +54,35 @@ public class RestauranteRepository {
     }
 
     public List<Restaurante> listarTodos() throws SQLException {
+        return listarPorEstado(true);
+    }
+
+    public List<Restaurante> listarInactivos() throws SQLException {
+        return listarPorEstado(false);
+    }
+
+    private List<Restaurante> listarPorEstado(boolean activo) throws SQLException {
         List<Restaurante> lista = new ArrayList<>();
-        String sql = "SELECT * FROM restaurantes";
+        String sql = "SELECT * FROM restaurantes WHERE activo = ?";
         try (Connection conn = conexion.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                Restaurante r = new Restaurante();
-                r.setId(rs.getInt("id"));
-                r.setNombre(rs.getString("nombre"));
-                r.setCedulaJuridica(rs.getString("cedula_juridica"));
-                r.setDireccion(rs.getString("direccion"));
-                r.setTipoComida(rs.getString("tipo_comida"));
-                lista.add(r);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBoolean(1, activo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapear(rs));
+                }
             }
         }
         return lista;
+    }
+
+    private Restaurante mapear(ResultSet rs) throws SQLException {
+        Restaurante r = new Restaurante();
+        r.setId(rs.getInt("id"));
+        r.setNombre(rs.getString("nombre"));
+        r.setCedulaJuridica(rs.getString("cedula_juridica"));
+        r.setDireccion(rs.getString("direccion"));
+        r.setTipoComida(rs.getString("tipo_comida"));
+        return r;
     }
 }

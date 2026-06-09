@@ -67,7 +67,20 @@ public class RepartidorRepository {
 
     public List<Repartidor> listarTodos() throws SQLException {
         List<Repartidor> lista = new ArrayList<>();
-        String sql = "SELECT * FROM repartidores";
+        String sql = "SELECT r.* FROM repartidores r JOIN usuarios u ON r.usuario_id = u.id WHERE u.activo = true";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapearResultSetARepartidor(rs));
+            }
+        }
+        return lista;
+    }
+
+    public List<Repartidor> listarInactivos() throws SQLException {
+        List<Repartidor> lista = new ArrayList<>();
+        String sql = "SELECT r.* FROM repartidores r JOIN usuarios u ON r.usuario_id = u.id WHERE u.activo = false";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -95,8 +108,18 @@ public class RepartidorRepository {
         }
     }
 
+    public boolean reactivar(int id) throws SQLException {
+        String sql = "UPDATE usuarios SET activo = true WHERE id = (SELECT usuario_id FROM repartidores WHERE id = ?)";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public boolean eliminar(int id) throws SQLException {
-        String sql = "DELETE FROM repartidores WHERE id = ?";
+        // Borrado lógico: desactiva el usuario asociado (activo = false)
+        String sql = "UPDATE usuarios SET activo = false WHERE id = (SELECT usuario_id FROM repartidores WHERE id = ?)";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);

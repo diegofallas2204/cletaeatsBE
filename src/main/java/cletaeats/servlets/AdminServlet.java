@@ -47,13 +47,20 @@ public class AdminServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(dashboard)));
             } else if (pathInfo.equals("/restaurantes")) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(restauranteRepo.listarTodos())));
+            } else if (pathInfo.equals("/restaurantes/inactivos")) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(restauranteRepo.listarInactivos())));
             } else if (pathInfo.equals("/clientes")) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(clienteRepo.listarTodos())));
+            } else if (pathInfo.equals("/clientes/inactivos")) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(clienteRepo.listarInactivos())));
             } else if (pathInfo.equals("/repartidores")) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(repartidorRepo.listarTodos())));
+            } else if (pathInfo.equals("/repartidores/inactivos")) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(repartidorRepo.listarInactivos())));
             } else if (pathInfo.equals("/combos")) {
-                // List all combos if no restId provided
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarTodos())));
+            } else if (pathInfo.equals("/combos/inactivos")) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarInactivos())));
             } else if (pathInfo.startsWith("/combos/")) {
                 int restId = Integer.parseInt(pathInfo.substring(8));
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarPorRestaurante(restId))));
@@ -106,18 +113,34 @@ public class AdminServlet extends HttpServlet {
                 Restaurante r = gson.fromJson(json, Restaurante.class);
                 restauranteRepo.actualizar(r);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Restaurante actualizado")));
+            } else if (pathInfo.startsWith("/restaurantes/reactivar/")) {
+                int id = Integer.parseInt(pathInfo.substring(24));
+                restauranteRepo.reactivar(id);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Restaurante reactivado")));
             } else if (pathInfo.equals("/combos")) {
                 Combo c = gson.fromJson(json, Combo.class);
                 comboRepo.actualizar(c);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Combo actualizado")));
+            } else if (pathInfo.startsWith("/combos/reactivar/")) {
+                int id = Integer.parseInt(pathInfo.substring(18));
+                comboRepo.reactivar(id);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Combo reactivado")));
             } else if (pathInfo.equals("/clientes")) {
                 Cliente c = gson.fromJson(json, Cliente.class);
                 clienteRepo.actualizar(c);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Cliente actualizado")));
+            } else if (pathInfo.startsWith("/clientes/reactivar/")) {
+                int id = Integer.parseInt(pathInfo.substring(20));
+                clienteRepo.reactivar(id);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Cliente reactivado")));
             } else if (pathInfo.equals("/repartidores")) {
                 Repartidor r = gson.fromJson(json, Repartidor.class);
                 repartidorRepo.actualizar(r);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor actualizado")));
+            } else if (pathInfo.startsWith("/repartidores/reactivar/")) {
+                int id = Integer.parseInt(pathInfo.substring(24));
+                repartidorRepo.reactivar(id);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito("Repartidor reactivado")));
             } else if (pathInfo.startsWith("/pedidos/")) {
                 int id = Integer.parseInt(pathInfo.substring(9));
                 com.google.gson.JsonObject body = gson.fromJson(json, com.google.gson.JsonObject.class);

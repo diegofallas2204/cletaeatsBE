@@ -66,7 +66,20 @@ public class ClienteRepository {
 
     public List<Cliente> listarTodos() throws SQLException {
         List<Cliente> lista = new ArrayList<>();
-        String sql = "SELECT * FROM clientes";
+        String sql = "SELECT c.* FROM clientes c JOIN usuarios u ON c.usuario_id = u.id WHERE u.activo = true";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapearResultSetACliente(rs));
+            }
+        }
+        return lista;
+    }
+
+    public List<Cliente> listarInactivos() throws SQLException {
+        List<Cliente> lista = new ArrayList<>();
+        String sql = "SELECT c.* FROM clientes c JOIN usuarios u ON c.usuario_id = u.id WHERE u.activo = false";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -92,8 +105,18 @@ public class ClienteRepository {
         }
     }
 
+    public boolean reactivar(int id) throws SQLException {
+        String sql = "UPDATE usuarios SET activo = true WHERE id = (SELECT usuario_id FROM clientes WHERE id = ?)";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public boolean eliminar(int id) throws SQLException {
-        String sql = "DELETE FROM clientes WHERE id = ?";
+        // Borrado lógico: desactiva el usuario asociado (activo = false)
+        String sql = "UPDATE usuarios SET activo = false WHERE id = (SELECT usuario_id FROM clientes WHERE id = ?)";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);

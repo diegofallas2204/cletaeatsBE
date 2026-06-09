@@ -23,7 +23,20 @@ public class ComboRepository {
 
     public List<Combo> listarTodos() throws SQLException {
         List<Combo> lista = new ArrayList<>();
-        String sql = "SELECT * FROM combos";
+        String sql = "SELECT * FROM combos WHERE activo = true";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapearResultSetACombo(rs));
+            }
+        }
+        return lista;
+    }
+
+    public List<Combo> listarInactivos() throws SQLException {
+        List<Combo> lista = new ArrayList<>();
+        String sql = "SELECT * FROM combos WHERE activo = false";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -36,7 +49,7 @@ public class ComboRepository {
 
     public List<Combo> listarPorRestaurante(int restauranteId) throws SQLException {
         List<Combo> lista = new ArrayList<>();
-        String sql = "SELECT * FROM combos WHERE restaurante_id = ?";
+        String sql = "SELECT * FROM combos WHERE restaurante_id = ? AND activo = true";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, restauranteId);
@@ -50,18 +63,30 @@ public class ComboRepository {
     }
 
     public boolean actualizar(Combo combo) throws SQLException {
-        String sql = "UPDATE combos SET nombre=?, precio=? WHERE id=?";
+        String sql = "UPDATE combos SET nombre=?, precio=?, restaurante_id=?, numero_combo=? WHERE id=?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, combo.getNombre());
             stmt.setFloat(2, combo.getPrecio());
-            stmt.setInt(3, combo.getId());
+            stmt.setInt(3, combo.getRestauranteId());
+            stmt.setInt(4, combo.getNumeroCombo());
+            stmt.setInt(5, combo.getId());
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public boolean reactivar(int id) throws SQLException {
+        String sql = "UPDATE combos SET activo = true WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         }
     }
 
     public boolean eliminar(int id) throws SQLException {
-        String sql = "DELETE FROM combos WHERE id = ?";
+        // Borrado lógico: marca el combo como inactivo
+        String sql = "UPDATE combos SET activo = false WHERE id = ?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
