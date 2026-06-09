@@ -58,13 +58,9 @@ public class AdminServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(repartidorRepo.listarTodos())));
             } else if (pathInfo.equals("/repartidores/inactivos")) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(repartidorRepo.listarInactivos())));
-            } else if (pathInfo.equals("/combos")) {
-                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarTodos())));
-            } else if (pathInfo.equals("/combos/inactivos")) {
-                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarInactivos())));
-            } else if (pathInfo.startsWith("/combos/")) {
-                int restId = Integer.parseInt(pathInfo.substring(8));
-                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarPorRestaurante(restId))));
+            } else if (pathInfo.equals("/combos") || pathInfo.equals("/combos/inactivos") || pathInfo.startsWith("/combos/")) {
+                resp.setStatus(HttpServletResponse.SC_GONE);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Usa /api/combos en su lugar.")));
             } else if (pathInfo.equals("/pedidos")) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(pedidoRepo.listarTodos())));
             }
