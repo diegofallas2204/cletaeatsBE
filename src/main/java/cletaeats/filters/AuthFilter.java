@@ -1,6 +1,8 @@
 package cletaeats.filters;
 
 import cletaeats.config.RespuestaJSON;
+import cletaeats.models.Usuario;
+import cletaeats.repositories.UsuarioRepository;
 import cletaeats.utils.JwtUtil;
 import com.google.gson.Gson;
 import jakarta.servlet.*;
@@ -13,6 +15,7 @@ import java.io.IOException;
 @WebFilter("/api/*")
 public class AuthFilter implements Filter {
     private final Gson gson = new Gson();
+    private final UsuarioRepository usuarioRepo = new UsuarioRepository();
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {}
@@ -41,7 +44,19 @@ public class AuthFilter implements Filter {
             String username = JwtUtil.validarToken(token);
             
             if (username != null) {
-                // Token válido, podemos guardar el usuario en el request
+                // Verificar que el usuario sigue activo en la BD
+                try {
+                    Usuario usuario = usuarioRepo.findByUsername(username);
+                    if (usuario != null && !usuario.isActivo()) {
+                        res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        res.setContentType("application/json");
+                        res.setCharacterEncoding("UTF-8");
+                        res.getWriter().write(gson.toJson(RespuestaJSON.fallar("Cuenta deshabilitada.")));
+                        return;
+                    }
+                } catch (Exception ignored) {
+                    // Si falla la consulta a BD, dejamos pasar (fail-open)
+                }
                 req.setAttribute("username", username);
                 chain.doFilter(request, response);
                 return;
