@@ -59,29 +59,28 @@
     padding-bottom: 2px;
     text-transform: uppercase;
   }
-  #topbar .search-wrap {
-    flex: 1;
-    max-width: 400px;
-    margin: 0 auto;
-    position: relative;
+  /* ─── SEARCH LOCAL ─── */
+  .section-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--white-card);
+    border: 2px solid var(--cream-dark);
+    border-radius: 14px;
+    padding: 8px 16px;
   }
-  #topbar .search-wrap input {
-    width: 100%;
-    padding: 8px 16px 8px 38px;
-    border-radius: 24px;
+  .section-search span { color: var(--text-mid); font-size: 1rem; }
+  .section-search input {
     border: none;
-    background: rgba(255,255,255,0.15);
-    color: #fff;
+    background: transparent;
     font-family: 'Nunito', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    color: var(--text-dark);
     outline: none;
-    transition: background 0.2s;
+    flex: 1;
+    min-width: 0;
   }
-  #topbar .search-wrap input::placeholder { color: rgba(255,255,255,0.6); }
-  #topbar .search-wrap .si {
-    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    color: rgba(255,255,255,0.7); font-size: 1rem;
-  }
+  .section-search input::placeholder { color: #b09070; }
   .btn-logout {
     background: rgba(255,255,255,0.1);
     color: #fff;
@@ -405,10 +404,6 @@
 <!-- TOPBAR -->
 <div id="topbar">
   <div class="logo">🍜 CletaEats</div>
-  <div class="search-wrap">
-    <span class="si">🔍</span>
-    <input type="text" id="globalSearch" placeholder="Buscar..." oninput="onSearch(this.value)" />
-  </div>
   <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
 </div>
 
@@ -444,12 +439,24 @@
     <!-- ══ DASHBOARD ══ -->
     <div id="dashboard" class="section-view visible">
       <div class="kpi-row">
-        <div class="summary-card"><h3>💰 Ventas Totales</h3><div class="val" id="dashVentas">...</div></div>
-        <div class="summary-card"><h3>📦 Total Pedidos</h3><div class="val" id="dashPedidos">...</div></div>
-        <div class="summary-card"><h3>🏪 Restaurantes</h3><div class="val" id="dashRestCount">...</div></div>
-        <div class="summary-card"><h3>👤 Clientes</h3><div class="val" id="dashCliCount">...</div></div>
-        <div class="summary-card"><h3>🛵 Repartidores</h3><div class="val" id="dashRepCount">...</div></div>
-        <div class="summary-card"><h3>⏳ Pendientes</h3><div class="val" id="dashPendientes">...</div></div>
+        <div class="summary-card" onclick="navTo('pedidos')" title="Ver pedidos">
+          <h3>💰 Ventas Totales</h3><div class="val" id="dashVentas">...</div>
+        </div>
+        <div class="summary-card" onclick="navTo('pedidos')" title="Ver pedidos">
+          <h3>📦 Total Pedidos</h3><div class="val" id="dashPedidos">...</div>
+        </div>
+        <div class="summary-card" onclick="navTo('restaurantes')" title="Ver restaurantes">
+          <h3>🏪 Restaurantes</h3><div class="val" id="dashRestCount">...</div>
+        </div>
+        <div class="summary-card" onclick="navTo('clientes')" title="Ver clientes">
+          <h3>👤 Clientes</h3><div class="val" id="dashCliCount">...</div>
+        </div>
+        <div class="summary-card" onclick="navTo('repartidores')" title="Ver repartidores">
+          <h3>🛵 Repartidores</h3><div class="val" id="dashRepCount">...</div>
+        </div>
+        <div class="summary-card" onclick="navToPedidosFiltrado('pendiente')" title="Ver pedidos pendientes">
+          <h3>⏳ Pendientes</h3><div class="val" id="dashPendientes">...</div>
+        </div>
       </div>
       <div class="chart-card">
         <h3>📊 Ventas por Restaurante</h3>
@@ -468,6 +475,10 @@
         <div class="header-actions">
           <button class="btn btn-export btn-sm" onclick="exportCSV('pedidos')">⬇ Exportar CSV</button>
         </div>
+      </div>
+      <div class="section-search">
+        <span>🔍</span>
+        <input type="text" id="searchPedidos" placeholder="Buscar por cliente, restaurante o ID..." oninput="renderPedidos(this.value)" />
       </div>
       <div class="status-tabs" id="pedidoTabs">
         <button class="stab active" onclick="filterPedidos('', this)">Todos</button>
@@ -500,6 +511,10 @@
           <button class="btn btn-primary" onclick="openModal('cliente')">+ Nuevo Cliente</button>
         </div>
       </div>
+      <div class="section-search">
+        <span>🔍</span>
+        <input type="text" id="searchClientes" placeholder="Buscar por nombre, email o ID..." oninput="renderClientes(this.value)" />
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Cédula</th><th>Acciones</th></tr></thead>
@@ -516,6 +531,10 @@
           <button class="btn btn-export btn-sm" onclick="exportCSV('restaurantes')">⬇ Exportar CSV</button>
           <button class="btn btn-primary" onclick="openModal('restaurante')">+ Nuevo Restaurante</button>
         </div>
+      </div>
+      <div class="section-search">
+        <span>🔍</span>
+        <input type="text" id="searchRestaurantes" placeholder="Buscar por nombre, tipo o ID..." oninput="renderRestaurantes(this.value)" />
       </div>
       <div id="food-panel">
         <div class="food-thumb active" onclick="filterByFood('', this)" title="Todos">🏠</div>
@@ -549,6 +568,10 @@
           <button class="btn btn-primary" onclick="openModal('repartidor')">+ Nuevo Repartidor</button>
         </div>
       </div>
+      <div class="section-search">
+        <span>🔍</span>
+        <input type="text" id="searchRepartidores" placeholder="Buscar por nombre, cédula o ID..." oninput="renderRepartidores(this.value)" />
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>Cédula</th><th>Estado</th><th>Acciones</th></tr></thead>
@@ -565,6 +588,10 @@
           <button class="btn btn-export btn-sm" onclick="exportCSV('productos')">⬇ Exportar CSV</button>
           <button class="btn btn-primary" onclick="openModal('producto')">+ Nuevo Combo</button>
         </div>
+      </div>
+      <div class="section-search">
+        <span>🔍</span>
+        <input type="text" id="searchProductos" placeholder="Buscar por nombre, restaurante ID o precio..." oninput="renderProductos(this.value)" />
       </div>
       <div class="table-wrap">
         <table>
@@ -613,6 +640,7 @@ async function goTo(section, el) {
   document.getElementById(section).classList.add('visible');
   if (el) el.classList.add('active');
   await renderAll();
+  if (section === 'dashboard') renderDashboard();
 }
 
 function toggleSidebar() {
@@ -633,7 +661,7 @@ async function fetchData(endpoint) {
   return json.success ? (json.data || []) : [];
 }
 
-async function renderAll(filter='') {
+async function renderAll() {
   const [clientes, restaurantes, repartidores, productos, pedidos, dashboard] = await Promise.all([
     fetchData('/clientes'),
     fetchData('/restaurantes'),
@@ -644,12 +672,14 @@ async function renderAll(filter='') {
   ]);
   data = { clientes, restaurantes, repartidores, productos, pedidos, dashboard };
 
-  renderDashboard();
-  renderPedidos(filter);
-  renderClientes(filter);
-  renderRestaurantes(filter);
-  renderRepartidores(filter);
-  renderProductos(filter);
+  const dashVisible = document.getElementById('dashboard').classList.contains('visible');
+  if (dashVisible) renderDashboard();
+
+  renderPedidos(document.getElementById('searchPedidos')?.value || '');
+  renderClientes(document.getElementById('searchClientes')?.value || '');
+  renderRestaurantes(document.getElementById('searchRestaurantes')?.value || '');
+  renderRepartidores(document.getElementById('searchRepartidores')?.value || '');
+  renderProductos(document.getElementById('searchProductos')?.value || '');
 }
 
 // ════════════════════════════════
@@ -848,7 +878,6 @@ function filterByFood(type, el) {
   renderRestaurantes(document.getElementById('globalSearch').value);
 }
 
-function onSearch(v) { renderAll(v); }
 
 // ════════════════════════════════
 //  EXPORT CSV
@@ -978,6 +1007,23 @@ async function deleteRecord(plural, id) {
 }
 
 function v(id) { return document.getElementById(id)?.value ?? ''; }
+
+// ════════════════════════════════
+//  NAVEGACIÓN DESDE DASHBOARD
+// ════════════════════════════════
+function navTo(section) {
+  const navEl = document.querySelector(`.nav-item[data-section="${section}"]`);
+  goTo(section, navEl);
+}
+
+function navToPedidosFiltrado(estado) {
+  currentPedidoFilter = estado;
+  document.querySelectorAll('#pedidoTabs .stab').forEach(t => t.classList.remove('active'));
+  const tab = [...document.querySelectorAll('#pedidoTabs .stab')]
+    .find(t => t.textContent.toLowerCase().includes(estado));
+  if (tab) tab.classList.add('active');
+  navTo('pedidos');
+}
 
 // ════════════════════════════════
 //  INIT
