@@ -301,7 +301,7 @@ let ventasChart = null, estadosChart = null;
 function logout() { localStorage.removeItem('adminToken'); window.location.href = 'login.html'; }
 
 async function goTo(section, el) {
-  if (section !== 'dashboard') destroyCharts();
+  destroyCharts();
   document.querySelectorAll('.section-view').forEach(v => v.classList.remove('visible'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(section).classList.add('visible');
