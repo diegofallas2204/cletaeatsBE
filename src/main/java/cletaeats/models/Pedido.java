@@ -8,7 +8,7 @@ public class Pedido {
     private int clienteId;
     private int restauranteId;
     private int repartidorId;
-    private String estado; // 'preparacion', 'camino', 'entregado', 'suspendido'
+    private String estado; // ENUM: 'preparacion', 'aceptado', 'camino', 'entregado', 'suspendido'
     private float subtotal;
     private float costoEnvio;
     private float iva;

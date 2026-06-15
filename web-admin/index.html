@@ -180,7 +180,7 @@
         <div class="summary-card" onclick="navTo('restaurantes')" title="Ver restaurantes"><h3>🏪 Restaurantes</h3><div class="val" id="dashRestCount">…</div></div>
         <div class="summary-card" onclick="navTo('clientes')" title="Ver clientes"><h3>👤 Clientes</h3><div class="val" id="dashCliCount">…</div></div>
         <div class="summary-card" onclick="navTo('repartidores')" title="Ver repartidores"><h3>🛵 Repartidores</h3><div class="val" id="dashRepCount">…</div></div>
-        <div class="summary-card" onclick="navToPedidosFiltrado('pendiente')" title="Ver pendientes"><h3>⏳ Pendientes</h3><div class="val" id="dashPendientes">…</div></div>
+        <div class="summary-card" onclick="navToPedidosFiltrado('preparacion')" title="Ver en preparación"><h3>⏳ En Preparación</h3><div class="val" id="dashPendientes">…</div></div>
       </div>
       <div id="chartsContainer" style="display:none;flex-direction:column;gap:16px;">
         <div class="chart-card"><h3>📊 Ventas por Restaurante</h3><div class="chart-wrap"><canvas id="ventasChart"></canvas></div></div>
@@ -197,8 +197,7 @@
       <div class="section-search"><span>🔍</span><input type="text" id="searchPedidos" placeholder="Buscar por cliente, restaurante o ID…" oninput="renderPedidos(this.value)"/></div>
       <div class="status-tabs" id="pedidoTabs">
         <button class="stab active" onclick="filterPedidos('',this)">Todos</button>
-        <button class="stab" onclick="filterPedidos('pendiente',this)">Pendiente</button>
-        <button class="stab" onclick="filterPedidos('preparando',this)">Preparando</button>
+        <button class="stab" onclick="filterPedidos('preparacion',this)">En Preparación</button>
         <button class="stab" onclick="filterPedidos('aceptado',this)">Aceptado</button>
         <button class="stab" onclick="filterPedidos('camino',this)">En Camino</button>
         <button class="stab" onclick="filterPedidos('entregado',this)">Entregado</button>
@@ -333,7 +332,8 @@ function navTo(section) {
 function navToPedidosFiltrado(estado) {
   currentPedidoFilter = estado;
   document.querySelectorAll('#pedidoTabs .stab').forEach(t => t.classList.remove('active'));
-  [...document.querySelectorAll('#pedidoTabs .stab')].find(t => t.textContent.toLowerCase().includes(estado))?.classList.add('active');
+  [...document.querySelectorAll('#pedidoTabs .stab')]
+    .find(t => (t.getAttribute('onclick') || '').includes(`filterPedidos('${estado}'`))?.classList.add('active');
   navTo('pedidos');
 }
 
@@ -382,7 +382,7 @@ function renderDashboard() {
   document.getElementById('dashRestCount').textContent = data.restaurantes.length;
   document.getElementById('dashCliCount').textContent  = d.totalClientes  || 0;
   document.getElementById('dashRepCount').textContent  = d.totalRepartidores || 0;
-  document.getElementById('dashPendientes').textContent = data.pedidos.filter(p => p.estado==='pendiente').length;
+  document.getElementById('dashPendientes').textContent = data.pedidos.filter(p => p.estado==='preparacion').length;
 
   const vpr = d.ventasPorRestaurante || [];
   destroyCharts();
@@ -396,20 +396,22 @@ function renderDashboard() {
                scales:{ y:{ ticks:{ callback: v=>'₡'+v.toLocaleString() } } } }
   });
 
-  const estados = ['pendiente','preparando','aceptado','camino','entregado','suspendido'];
+  const estados = ['preparacion','aceptado','camino','entregado','suspendido'];
+  const estadoLabels = { preparacion:'En Preparación', aceptado:'Aceptado', camino:'En Camino', entregado:'Entregado', suspendido:'Suspendido' };
   estadosChart = new Chart(document.getElementById('estadosChart'), {
     type: 'doughnut',
-    data: { labels: estados.map(e=>e[0].toUpperCase()+e.slice(1)),
+    data: { labels: estados.map(e=>estadoLabels[e]),
             datasets: [{ data: estados.map(e => data.pedidos.filter(p=>p.estado===e).length),
-                         backgroundColor:['#f39c12','#3498db','#9b59b6','#1abc9c','#27ae60','#e74c3c'], borderWidth:2 }] },
+                         backgroundColor:['#f39c12','#9b59b6','#1abc9c','#27ae60','#e74c3c'], borderWidth:2 }] },
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right'}} }
   });
 }
 
 // ── RENDER TABLES ────────────────────────────────
+const ESTADO_PEDIDO_LABELS = { preparacion:'En Preparación', aceptado:'Aceptado', camino:'En Camino', entregado:'Entregado', suspendido:'Suspendido' };
 function estadoBadge(e) {
-  const m = { pendiente:'badge-orange', preparando:'badge-blue', aceptado:'badge-purple', camino:'badge-blue', entregado:'badge-green', suspendido:'badge-red' };
-  return `<span class="badge ${m[e]||'badge-gray'}">${e||'—'}</span>`;
+  const m = { preparacion:'badge-orange', aceptado:'badge-purple', camino:'badge-blue', entregado:'badge-green', suspendido:'badge-red' };
+  return `<span class="badge ${m[e]||'badge-gray'}">${ESTADO_PEDIDO_LABELS[e]||e||'—'}</span>`;
 }
 
 function renderPedidos(q='') {
@@ -425,7 +427,7 @@ function renderPedidos(q='') {
     <td><div class="actions-cell">
       <select class="estado-select" onchange="updateOrderStatus(${p.id},this.value)">
         <option value="">Cambiar…</option>
-        ${['pendiente','preparando','aceptado','camino','entregado','suspendido'].map(s=>`<option value="${s}">${s}</option>`).join('')}
+        ${['preparacion','aceptado','camino','entregado','suspendido'].map(s=>`<option value="${s}">${ESTADO_PEDIDO_LABELS[s]}</option>`).join('')}
       </select>
       <button class="btn btn-danger btn-sm btn-icon" onclick="deletePedido(${p.id})">🗑</button>
     </div></td></tr>`).join('');
