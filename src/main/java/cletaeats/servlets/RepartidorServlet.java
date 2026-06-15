@@ -1,6 +1,7 @@
 package cletaeats.servlets;
 
 import cletaeats.config.RespuestaJSON;
+import cletaeats.controllers.RepartidorController;
 import cletaeats.models.Pedido;
 import cletaeats.models.Repartidor;
 import cletaeats.models.Usuario;
@@ -24,6 +25,7 @@ public class RepartidorServlet extends HttpServlet {
     private final PedidoRepository pedidoRepository = new PedidoRepository();
     private final RepartidorRepository repartidorRepository = new RepartidorRepository();
     private final UsuarioRepository usuarioRepository = new UsuarioRepository();
+    private final RepartidorController repartidorController = new RepartidorController();
     private final Gson gson = new Gson();
 
     @Override
@@ -32,7 +34,7 @@ public class RepartidorServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
 
         String pathInfo = req.getPathInfo();
-        if (pathInfo == null || (!pathInfo.equals("/pedidos") && !pathInfo.equals("/pedidos/disponibles"))) {
+        if (pathInfo == null || (!pathInfo.equals("/pedidos") && !pathInfo.equals("/pedidos/disponibles") && !pathInfo.equals("/tarjetas"))) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Endpoint no encontrado")));
             return;
@@ -47,6 +49,11 @@ public class RepartidorServlet extends HttpServlet {
             if (repartidor == null) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("El usuario no tiene perfil de repartidor")));
+                return;
+            }
+
+            if (pathInfo.equals("/tarjetas")) {
+                resp.getWriter().write(repartidorController.obtenerTarjetas(repartidor.getId()));
                 return;
             }
 
@@ -152,6 +159,83 @@ public class RepartidorServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("No se pudo actualizar el pedido")));
             }
 
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            System.err.println("CletaEats RepartidorServlet error: " + e.getMessage());
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || !pathInfo.equals("/tarjetas")) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Endpoint no encontrado")));
+            return;
+        }
+
+        try {
+            String username = (String) req.getAttribute("username");
+            Usuario usuario = usuarioRepository.findByUsername(username);
+            Repartidor repartidor = repartidorRepository.buscarPorUsuarioId(usuario.getId());
+
+            if (repartidor == null) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("El usuario no tiene perfil de repartidor")));
+                return;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            BufferedReader reader = req.getReader();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+
+            resp.getWriter().write(repartidorController.guardarTarjeta(repartidor.getId(), sb.toString()));
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            System.err.println("CletaEats RepartidorServlet error: " + e.getMessage());
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Error interno del servidor.")));
+        }
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || !pathInfo.startsWith("/tarjetas/")) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Endpoint no encontrado")));
+            return;
+        }
+
+        try {
+            String username = (String) req.getAttribute("username");
+            Usuario usuario = usuarioRepository.findByUsername(username);
+            Repartidor repartidor = repartidorRepository.buscarPorUsuarioId(usuario.getId());
+
+            if (repartidor == null) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("El usuario no tiene perfil de repartidor")));
+                return;
+            }
+
+            String[] partes = pathInfo.split("/");
+            if (partes.length < 3) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write(gson.toJson(RespuestaJSON.fallar("Peticion invalida")));
+                return;
+            }
+            int tarjetaId = Integer.parseInt(partes[2]);
+
+            resp.getWriter().write(repartidorController.eliminarTarjeta(repartidor.getId(), tarjetaId));
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             System.err.println("CletaEats RepartidorServlet error: " + e.getMessage());
