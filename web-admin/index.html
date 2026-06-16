@@ -206,7 +206,6 @@
       <div class="status-tabs" id="pedidoTabs">
         <button class="stab active" onclick="filterPedidos('',this)">Todos</button>
         <button class="stab" onclick="filterPedidos('preparacion',this)">En Preparación</button>
-        <button class="stab" onclick="filterPedidos('aceptado',this)">Aceptado</button>
         <button class="stab" onclick="filterPedidos('camino',this)">En Camino</button>
         <button class="stab" onclick="filterPedidos('entregado',this)">Entregado</button>
         <button class="stab" onclick="filterPedidos('suspendido',this)">Suspendido</button>
@@ -447,9 +446,17 @@ function estadoBadge(e) {
   return `<span class="badge ${m[e]||'badge-gray'}">${ESTADO_PEDIDO_LABELS[e]||e||'—'}</span>`;
 }
 
+// La pestaña "En Camino" agrupa 'aceptado' (repartidor ya lo tomó) y 'camino'
+// (yendo al cliente), porque para el admin son la misma fase "en proceso".
+function matchesPedidoFilter(estado) {
+  if (!currentPedidoFilter) return true;
+  if (currentPedidoFilter === 'camino') return estado === 'aceptado' || estado === 'camino';
+  return estado === currentPedidoFilter;
+}
+
 function renderPedidos(q='') {
   const tb = document.getElementById('tbPedidos');
-  const list = data.pedidos.filter(p => (!currentPedidoFilter || p.estado===currentPedidoFilter)
+  const list = data.pedidos.filter(p => matchesPedidoFilter(p.estado)
     && (!q || JSON.stringify(p).toLowerCase().includes(q.toLowerCase())));
   if (!list.length) { tb.innerHTML='<tr class="empty-row"><td colspan="7">Sin pedidos</td></tr>'; return; }
   tb.innerHTML = list.map(p=>`<tr>
