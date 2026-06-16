@@ -4,6 +4,10 @@ import cletaeats.config.Conexion;
 import cletaeats.models.Valoracion;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ValoracionRepository {
     private final Conexion conexion = Conexion.getInstancia();
@@ -22,6 +26,39 @@ public class ValoracionRepository {
             }
         }
         return v;
+    }
+
+    /**
+     * Lista todas las valoraciones (estrellas + comentario) con el nombre del
+     * cliente y del restaurante asociados al pedido, para mostrarlas en el admin.
+     */
+    public List<Map<String, Object>> listarTodas() throws SQLException {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = "SELECT v.id, v.pedido_id, v.cliente_id, v.rating, v.comentario, v.fecha, " +
+                     "IFNULL(c.nombre, '') AS cliente_nombre, " +
+                     "IFNULL(r.nombre, '') AS restaurante_nombre " +
+                     "FROM valoraciones v " +
+                     "LEFT JOIN clientes c ON v.cliente_id = c.id " +
+                     "LEFT JOIN pedidos p ON v.pedido_id = p.id " +
+                     "LEFT JOIN restaurantes r ON p.restaurante_id = r.id " +
+                     "ORDER BY v.fecha DESC";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("id",                rs.getInt("id"));
+                row.put("pedidoId",          rs.getInt("pedido_id"));
+                row.put("clienteId",         rs.getInt("cliente_id"));
+                row.put("rating",            rs.getInt("rating"));
+                row.put("comentario",        rs.getString("comentario"));
+                row.put("fecha",             rs.getString("fecha"));
+                row.put("clienteNombre",     rs.getString("cliente_nombre"));
+                row.put("restauranteNombre", rs.getString("restaurante_nombre"));
+                lista.add(row);
+            }
+        }
+        return lista;
     }
 
     public boolean existeParaPedido(int pedidoId) throws SQLException {

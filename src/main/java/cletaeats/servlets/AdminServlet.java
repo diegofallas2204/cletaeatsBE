@@ -10,6 +10,7 @@ import cletaeats.repositories.PedidoRepository;
 import cletaeats.repositories.RestauranteRepository;
 import cletaeats.repositories.ClienteRepository;
 import cletaeats.repositories.RepartidorRepository;
+import cletaeats.repositories.ValoracionRepository;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -29,6 +30,7 @@ public class AdminServlet extends HttpServlet {
     private final PedidoRepository pedidoRepo = new PedidoRepository();
     private final ClienteRepository clienteRepo = new ClienteRepository();
     private final RepartidorRepository repartidorRepo = new RepartidorRepository();
+    private final ValoracionRepository valoracionRepo = new ValoracionRepository();
     private final Gson gson = new Gson();
 
     @Override
@@ -67,6 +69,8 @@ public class AdminServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(comboRepo.listarPorRestaurante(restId))));
             } else if (pathInfo.equals("/pedidos")) {
                 resp.getWriter().write(gson.toJson(RespuestaJSON.exito(pedidoRepo.listarTodos())));
+            } else if (pathInfo.equals("/valoraciones")) {
+                resp.getWriter().write(gson.toJson(RespuestaJSON.exito(valoracionRepo.listarTodas())));
             }
         } catch (Exception e) {
             System.err.println("CletaEats AdminServlet doGet: " + e.getMessage());

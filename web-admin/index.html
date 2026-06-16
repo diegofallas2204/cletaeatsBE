@@ -176,6 +176,7 @@
     <div class="nav-item" data-section="restaurantes" onclick="goTo('restaurantes',this)"><span class="dot dot-restaurante"></span><span class="nav-label">Restaurantes</span></div>
     <div class="nav-item" data-section="repartidores" onclick="goTo('repartidores',this)"><span class="dot dot-repartidor"></span><span class="nav-label">Repartidores</span></div>
     <div class="nav-item" data-section="productos"    onclick="goTo('productos',this)"><span class="dot dot-producto"></span><span class="nav-label">Combos</span></div>
+    <div class="nav-item" data-section="valoraciones" onclick="goTo('valoraciones',this)"><span class="dot dot-cliente"></span><span class="nav-label">Valoraciones</span></div>
   </nav>
 
   <main id="main">
@@ -295,6 +296,27 @@
       </table></div>
     </div>
 
+    <!-- VALORACIONES / RESEÑAS -->
+    <div id="valoraciones" class="section-view">
+      <div class="section-header">
+        <h2>💬 Comentarios y Valoraciones</h2>
+        <div class="header-actions"><button class="btn btn-export btn-sm" onclick="exportCSV('valoraciones')">⬇ CSV</button></div>
+      </div>
+      <div class="section-search"><span>🔍</span><input type="text" id="searchValoraciones" placeholder="Buscar por cliente, restaurante, comentario o pedido…" oninput="renderValoraciones(this.value)"/></div>
+      <div class="status-tabs" id="valoracionTabs">
+        <button class="stab active" onclick="filterValoraciones(0,this)">Todas</button>
+        <button class="stab" onclick="filterValoraciones(5,this)">★★★★★ 5</button>
+        <button class="stab" onclick="filterValoraciones(4,this)">★★★★ 4</button>
+        <button class="stab" onclick="filterValoraciones(3,this)">★★★ 3</button>
+        <button class="stab" onclick="filterValoraciones(2,this)">★★ 2</button>
+        <button class="stab" onclick="filterValoraciones(1,this)">★ 1</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Pedido</th><th>Cliente</th><th>Restaurante</th><th>Calificación</th><th>Comentario</th><th>Fecha</th></tr></thead>
+        <tbody id="tbValoraciones"></tbody>
+      </table></div>
+    </div>
+
   </main>
 </div>
 
@@ -314,8 +336,8 @@
 <script>
 const API_BASE = '/api/admin';
 const TOKEN    = localStorage.getItem('adminToken');
-let data = { clientes:[], restaurantes:[], repartidores:[], productos:[], pedidos:[], dashboard:{} };
-let currentFoodFilter = '', currentPedidoFilter = '';
+let data = { clientes:[], restaurantes:[], repartidores:[], productos:[], pedidos:[], valoraciones:[], dashboard:{} };
+let currentFoodFilter = '', currentPedidoFilter = '', currentRatingFilter = 0;
 let editingId = null, currentEntity = null, sidebarCollapsed = false;
 let ventasChart = null, estadosChart = null;
 
@@ -360,17 +382,18 @@ async function fetchData(endpoint) {
 }
 
 async function renderAll() {
-  const [clientes, restaurantes, repartidores, productos, pedidos, dashboard] = await Promise.all([
+  const [clientes, restaurantes, repartidores, productos, pedidos, valoraciones, dashboard] = await Promise.all([
     fetchData('/clientes'), fetchData('/restaurantes'), fetchData('/repartidores'),
-    fetchData('/combos'),   fetchData('/pedidos'),      fetchData('/dashboard'),
+    fetchData('/combos'),   fetchData('/pedidos'),      fetchData('/valoraciones'), fetchData('/dashboard'),
   ]);
-  data = { clientes, restaurantes, repartidores, productos, pedidos, dashboard };
+  data = { clientes, restaurantes, repartidores, productos, pedidos, valoraciones, dashboard };
 
   renderPedidos(document.getElementById('searchPedidos')?.value || '');
   renderClientes(document.getElementById('searchClientes')?.value || '');
   renderRestaurantes(document.getElementById('searchRestaurantes')?.value || '');
   renderRepartidores(document.getElementById('searchRepartidores')?.value || '');
   renderProductos(document.getElementById('searchProductos')?.value || '');
+  renderValoraciones(document.getElementById('searchValoraciones')?.value || '');
 }
 
 // ── CHARTS ─────────────────────────────────────
@@ -532,6 +555,34 @@ function renderProductos(q='') {
     </div></td></tr>`).join('');
 }
 
+function estrellas(n) {
+  const r = Math.max(0, Math.min(5, n|0));
+  return `<span style="color:#e8a45a;letter-spacing:1px;font-size:0.95rem;" title="${r} de 5">${'★'.repeat(r)}<span style="color:var(--cream-dark)">${'★'.repeat(5-r)}</span></span>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderValoraciones(q='') {
+  const tb = document.getElementById('tbValoraciones');
+  const list = data.valoraciones.filter(v =>
+    (currentRatingFilter === 0 || (v.rating|0) === currentRatingFilter)
+    && (!q || JSON.stringify(v).toLowerCase().includes(q.toLowerCase())));
+  if (!list.length) {
+    const msg = currentRatingFilter ? `Sin valoraciones de ${currentRatingFilter} ${currentRatingFilter===1?'estrella':'estrellas'}` : 'Aún no hay comentarios ni valoraciones';
+    tb.innerHTML=`<tr class="empty-row"><td colspan="6">${msg}</td></tr>`; return;
+  }
+  tb.innerHTML = list.map(v=>`<tr>
+    <td>#${v.pedidoId}</td>
+    <td>${escapeHtml(v.clienteNombre||v.clienteId)}</td>
+    <td>${escapeHtml(v.restauranteNombre||'—')}</td>
+    <td>${estrellas(v.rating)}</td>
+    <td>${v.comentario ? escapeHtml(v.comentario) : '<span style="color:#b09070;font-style:italic;">Sin comentario</span>'}</td>
+    <td>${v.fecha?v.fecha.substring(0,16).replace('T',' '):'—'}</td>
+  </tr>`).join('');
+}
+
 function filterByFood(type, el) {
   currentFoodFilter = type.toLowerCase();
   document.querySelectorAll('.food-thumb').forEach(t => t.classList.remove('active'));
@@ -543,6 +594,12 @@ function filterPedidos(estado, el) {
   document.querySelectorAll('#pedidoTabs .stab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   renderPedidos(document.getElementById('searchPedidos').value);
+}
+function filterValoraciones(rating, el) {
+  currentRatingFilter = rating;
+  document.querySelectorAll('#valoracionTabs .stab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderValoraciones(document.getElementById('searchValoraciones').value);
 }
 
 // ── PEDIDO ACTIONS ───────────────────────────────
@@ -568,6 +625,7 @@ function exportCSV(section) {
     restaurantes: { list:data.restaurantes, cols:['id','nombre','tipoComida','cedulaJuridica','direccion'],                                              heads:['ID','Nombre','Tipo','Cédula Jurídica','Dirección'] },
     repartidores: { list:data.repartidores, cols:['id','nombre','username','email','cedula','estado','kmRecorridos','amonestaciones'],                              heads:['ID','Nombre','Usuario','Email','Cédula','Estado','Km','Amon.'] },
     productos:    { list:data.productos,    cols:['id','nombre','restauranteId','numeroCombo','precio'],                                                 heads:['ID','Nombre','Restaurante ID','Nº Combo','Precio'] },
+    valoraciones: { list:data.valoraciones, cols:['pedidoId','clienteNombre','restauranteNombre','rating','comentario','fecha'],                          heads:['Pedido','Cliente','Restaurante','Calificación','Comentario','Fecha'] },
   };
   const {list, cols, heads} = maps[section];
   const rows = [heads, ...list.map(r => cols.map(c => `"${(r[c]??'').toString().replace(/"/g,'""')}"`))]
