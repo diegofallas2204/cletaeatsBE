@@ -89,7 +89,7 @@ public class PedidoRepository {
     }
 
     public double sumarVentasTotales() throws SQLException {
-        String sql = "SELECT SUM(total) as gran_total FROM pedidos WHERE estado = 'entregado'";
+        String sql = "SELECT SUM(total) as gran_total FROM pedidos WHERE estado = 'entregado' AND activo = true";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -104,7 +104,7 @@ public class PedidoRepository {
         List<ReporteRestaurante> lista = new ArrayList<>();
         String sql = "SELECT r.nombre, COUNT(p.id) as cantidad_pedidos, IFNULL(SUM(p.total), 0) as total_ventas " +
                 "FROM restaurantes r " +
-                "LEFT JOIN pedidos p ON r.id = p.restaurante_id AND p.estado = 'entregado' " +
+                "LEFT JOIN pedidos p ON r.id = p.restaurante_id AND p.estado = 'entregado' AND p.activo = true " +
                 "GROUP BY r.id, r.nombre " +
                 "ORDER BY total_ventas DESC";
 
@@ -126,7 +126,7 @@ public class PedidoRepository {
 
     public List<Pedido> listarPorCliente(int clienteId) throws SQLException {
         List<Pedido> pedidos = new ArrayList<>();
-        String sql = "SELECT * FROM pedidos WHERE cliente_id = ? ORDER BY fecha_pedido DESC";
+        String sql = "SELECT * FROM pedidos WHERE cliente_id = ? AND activo = true ORDER BY fecha_pedido DESC";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, clienteId);
@@ -141,7 +141,7 @@ public class PedidoRepository {
 
     public List<Pedido> listarPorRepartidor(int repartidorId) throws SQLException {
         List<Pedido> pedidos = new ArrayList<>();
-        String sql = "SELECT * FROM pedidos WHERE (repartidor_id = ? AND estado != 'entregado' AND estado != 'suspendido') OR (estado = 'preparacion' AND (repartidor_id IS NULL OR repartidor_id = 0)) ORDER BY fecha_pedido DESC";
+        String sql = "SELECT * FROM pedidos WHERE activo = true AND ((repartidor_id = ? AND estado != 'entregado' AND estado != 'suspendido') OR (estado = 'preparacion' AND (repartidor_id IS NULL OR repartidor_id = 0))) ORDER BY fecha_pedido DESC";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, repartidorId);
@@ -156,7 +156,7 @@ public class PedidoRepository {
 
     public List<Pedido> listarDisponibles() throws SQLException {
         List<Pedido> pedidos = new ArrayList<>();
-        String sql = "SELECT * FROM pedidos WHERE repartidor_id IS NULL AND estado = 'preparacion' ORDER BY fecha_pedido DESC";
+        String sql = "SELECT * FROM pedidos WHERE repartidor_id IS NULL AND estado = 'preparacion' AND activo = true ORDER BY fecha_pedido DESC";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             try (ResultSet rs = stmt.executeQuery()) {
@@ -169,7 +169,7 @@ public class PedidoRepository {
     }
 
     public boolean repartidorTienePedidoActivo(int repartidorId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM pedidos WHERE repartidor_id = ? AND estado IN ('preparacion', 'aceptado', 'camino')";
+        String sql = "SELECT COUNT(*) FROM pedidos WHERE repartidor_id = ? AND estado IN ('preparacion', 'aceptado', 'camino') AND activo = true";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, repartidorId);
@@ -183,7 +183,7 @@ public class PedidoRepository {
     }
 
     public boolean asignarPedidoAtomico(int pedidoId, int repartidorId) throws SQLException {
-        String sql = "UPDATE pedidos SET repartidor_id = ?, estado = 'aceptado' WHERE id = ? AND repartidor_id IS NULL";
+        String sql = "UPDATE pedidos SET repartidor_id = ?, estado = 'aceptado' WHERE id = ? AND repartidor_id IS NULL AND activo = true";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, repartidorId);
@@ -193,7 +193,7 @@ public class PedidoRepository {
     }
 
     public boolean cancelarPedidoCliente(int pedidoId, int clienteId) throws SQLException {
-        String sql = "UPDATE pedidos SET estado = 'suspendido' WHERE id = ? AND cliente_id = ? AND estado IN ('preparacion', 'aceptado')";
+        String sql = "UPDATE pedidos SET estado = 'suspendido' WHERE id = ? AND cliente_id = ? AND estado IN ('preparacion', 'aceptado') AND activo = true";
         try (Connection conn = conexion.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, pedidoId);
