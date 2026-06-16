@@ -144,6 +144,13 @@
 
   .empty-row td { text-align:center; color:var(--text-mid); padding:24px; font-style:italic; }
   ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:var(--cream); } ::-webkit-scrollbar-thumb { background:var(--brown-light); border-radius:6px; }
+
+  /* LIVE BADGE (auto-refresh) */
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(126,217,87,0.6);} 70%{box-shadow:0 0 0 7px rgba(126,217,87,0);} 100%{box-shadow:0 0 0 0 rgba(126,217,87,0);} }
+  .live-badge { display:flex; align-items:center; gap:7px; color:#dfeede; font-weight:800; font-size:0.78rem; margin-right:18px; user-select:none; }
+  .live-badge .ld { width:9px; height:9px; border-radius:50%; background:#7ed957; animation:pulse 2s infinite; flex-shrink:0; }
+  .live-badge.paused { color:#f0cda0; }
+  .live-badge.paused .ld { background:#e8a45a; animation:none; }
 </style>
 </head>
 <body>
@@ -151,6 +158,7 @@
 <!-- TOPBAR -->
 <div id="topbar">
   <div class="logo">🍜 CletaEats Admin</div>
+  <div class="live-badge" id="liveBadge" title="La información se actualiza sola cada pocos segundos"><span class="ld"></span><span id="liveText">En vivo</span></div>
   <button class="btn-logout" onclick="logout()" title="Cerrar sesión">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
@@ -405,6 +413,31 @@ function renderDashboard() {
                          backgroundColor:['#f39c12','#9b59b6','#1abc9c','#27ae60','#e74c3c'], borderWidth:2 }] },
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right'}} }
   });
+}
+
+// Refresco en vivo del dashboard SIN destruir los charts (evita el parpadeo).
+// Solo actualiza KPIs y datasets en sitio con chart.update('none').
+function refreshDashboardLive() {
+  if (!document.getElementById('dashboard').classList.contains('visible')) return;
+  // Si los charts aún no existen (primera carga), hacer build completo una vez.
+  if (!ventasChart || !estadosChart) { renderDashboard(); return; }
+
+  const d = data.dashboard;
+  document.getElementById('dashVentas').textContent    = '₡' + (d.ventasTotales || 0).toLocaleString('es-CR',{maximumFractionDigits:0});
+  document.getElementById('dashPedidos').textContent   = data.pedidos.length;
+  document.getElementById('dashRestCount').textContent = data.restaurantes.length;
+  document.getElementById('dashCliCount').textContent  = d.totalClientes  || 0;
+  document.getElementById('dashRepCount').textContent  = d.totalRepartidores || 0;
+  document.getElementById('dashPendientes').textContent = data.pedidos.filter(p => p.estado==='preparacion').length;
+
+  const vpr = d.ventasPorRestaurante || [];
+  ventasChart.data.labels = vpr.map(r => r.nombreRestaurante || r.nombre || '');
+  ventasChart.data.datasets[0].data = vpr.map(r => r.totalVendido || 0);
+  ventasChart.update('none');
+
+  const estados = ['preparacion','aceptado','camino','entregado','suspendido'];
+  estadosChart.data.datasets[0].data = estados.map(e => data.pedidos.filter(p=>p.estado===e).length);
+  estadosChart.update('none');
 }
 
 // ── RENDER TABLES ────────────────────────────────
@@ -751,8 +784,49 @@ async function deleteRecord(plural, id) {
 
 function v(id) { return document.getElementById(id)?.value?.trim() ?? ''; }
 
+// ── AUTO-REFRESH (polling tipo "sockets") ─────────
+const REFRESH_MS = 5000;
+let refreshTimer = null;
+
+// No refrescar cuando hay un modal abierto, un <select> de estado en uso,
+// o la pestaña está oculta: así no se pisa lo que el admin está haciendo.
+function isBusy() {
+  if (document.hidden) return true;
+  if (document.getElementById('modalOverlay').classList.contains('open')) return true;
+  if (document.activeElement && document.activeElement.tagName === 'SELECT') return true;
+  return false;
+}
+
+function setLiveBadge(active) {
+  const b = document.getElementById('liveBadge');
+  if (!b) return;
+  b.classList.toggle('paused', !active);
+  document.getElementById('liveText').textContent = active ? 'En vivo' : 'En pausa';
+}
+
+async function autoRefresh() {
+  if (isBusy()) { setLiveBadge(false); return; }
+  setLiveBadge(true);
+  try {
+    await renderAll();          // refresca todas las tablas (pedidos, clientes, etc.)
+    refreshDashboardLive();     // refresca KPIs y charts sin parpadeo
+  } catch (e) {
+    // Un fallo de red puntual no debe cortar el ciclo; se reintenta solo.
+    console.warn('Auto-refresh falló, se reintenta en el próximo ciclo:', e);
+  }
+}
+
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(autoRefresh, REFRESH_MS);
+}
+
+// Al volver a la pestaña, refrescar de inmediato sin esperar el intervalo.
+document.addEventListener('visibilitychange', () => { if (!document.hidden) autoRefresh(); });
+
 // ── INIT ──────────────────────────────────────────
 renderAll().then(renderDashboard);
+startAutoRefresh();
 </script>
 </body>
 </html>
