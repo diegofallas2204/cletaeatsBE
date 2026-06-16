@@ -44,7 +44,9 @@ public class MetodoPagoRepartidorRepository {
             stmt.setInt(1, repartidorId);
             stmt.setString(2, tarjeta.getNumeroTarjeta());
             stmt.setString(3, tarjeta.getFechaVencimiento());
-            stmt.setString(4, tarjeta.getCvv());
+            // PCI-DSS: el CVV no debe almacenarse. La columna es NOT NULL, así que
+            // guardamos cadena vacía en lugar del valor real.
+            stmt.setString(4, "");
 
             stmt.executeUpdate();
             try (ResultSet rs = stmt.getGeneratedKeys()) {
