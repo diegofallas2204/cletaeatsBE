@@ -37,14 +37,11 @@ public class PedidoService {
         // Ignorar el clienteId enviado desde el payload y usar siempre el cliente del token.
         pedido.setClienteId(cliente.getId());
 
-        // 2. Asignar Repartidor Automáticamente (Requerimiento 8.4)
-        Repartidor disponible = repartidorRepo.obtenerDisponibleParaAsignacion();
-        if (disponible == null) {
-            // No hay repartidor disponible ahora; el pedido se crea igual y queda en preparación.
-            pedido.setRepartidorId(0);
-        } else {
-            pedido.setRepartidorId(disponible.getId());
-        }
+        // 2. El pedido NO se asigna automáticamente a un repartidor: nace sin
+        // repartidor y en 'preparacion' (el restaurante lo prepara). Un repartidor
+        // lo toma manualmente desde /api/repartidor/pedidos/{id}/asignar, lo que
+        // valida que no tenga otro pedido activo y hace la asignación atómica.
+        pedido.setRepartidorId(0);
 
         // 3. Cálculos Financieros
         float subtotal = 0;
@@ -80,13 +77,9 @@ public class PedidoService {
         pedido.setTotal(total);
         pedido.setEstado("preparacion");
 
-        // 6. Guardar y cambiar estado del repartidor a ocupado solo si se asignó uno.
-        int idPedido = pedidoRepo.crearPedido(pedido);
-        if (disponible != null) {
-            repartidorRepo.actualizarEstado(disponible.getId(), "ocupado");
-        }
-
-        return idPedido;
+        // 6. Guardar. El repartidor pasa a 'ocupado' solo cuando toma el pedido,
+        // no al crearse (eso lo maneja el flujo de asignación del repartidor).
+        return pedidoRepo.crearPedido(pedido);
     }
 
     public List<Pedido> obtenerHistorialCliente(int clienteId) throws SQLException {
